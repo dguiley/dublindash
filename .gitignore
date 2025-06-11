@@ -16,4 +16,4 @@ build/
 # Environment variables
 .env
 
-CLAUDE.md
+.idea
