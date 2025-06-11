@@ -1,0 +1,42 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom game styles */
+@layer base {
+  html, body {
+    @apply h-full overflow-hidden;
+  }
+  
+  #app {
+    @apply h-full;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply px-6 py-3 rounded-lg font-semibold transition-all duration-200 hover:scale-105 cursor-pointer;
+  }
+  
+  .btn-primary {
+    @apply bg-green-600 hover:bg-green-700 disabled:bg-gray-600 text-white;
+  }
+  
+  .btn-secondary {
+    @apply bg-purple-600 hover:bg-purple-700 text-white;
+  }
+  
+  .btn-danger {
+    @apply bg-red-600 hover:bg-red-700 text-white;
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400;
+  }
+  
+  .bg-game-gradient {
+    @apply bg-gradient-to-br from-purple-900 to-blue-900;
+  }
+}

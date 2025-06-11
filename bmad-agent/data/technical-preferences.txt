@@ -1,4 +1,4 @@
-# Technical Preferences & Stack Guidance
+Now # Technical Preferences & Stack Guidance
 
 ## Development Philosophy
 **Style**: Pragmatic, simplicity, rigor for key architecture and style, fluid and fast everywhere else
@@ -18,7 +18,7 @@
 
 ### Backend  
 - **Node.js + TypeScript** - Type-safe backend
-- **Fastify** - High performance, plugin ecosystem
+- **Fastify** - High performance, plugin ecosystem (default port 3010)
 - **TypeORM** - Type-safe ORM
 - **Flyway** - migrations
 - **Zod** - Runtime validation + TypeScript inference

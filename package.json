@@ -1,0 +1,23 @@
+{
+  "name": "dublindash",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm --filter dublindash-client dev",
+    "dev:server": "PORT=3010 pnpm --filter dublindash-server dev", 
+    "dev:all": "concurrently \"pnpm dev:server\" \"pnpm dev\"",
+    "build": "pnpm --filter dublindash-client build",
+    "type-check": "pnpm --filter dublindash-client type-check",
+    "lint": "pnpm --filter dublindash-client lint",
+    "install:all": "pnpm install"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.0",
+    "pnpm": "^8.15.0"
+  },
+  "engines": {
+    "node": ">=18",
+    "pnpm": ">=8"
+  }
+}
