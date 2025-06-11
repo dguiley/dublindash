@@ -23,13 +23,13 @@ const otherPlayers = computed(() =>
 // Camera follows player with smooth interpolation
 const cameraPosition = computed(() => {
   const player = gameStore.localPlayer
-  if (!player) return [0, 15, 10]
+  if (!player) return [0, 25, 15]
   
   // Top-down angled view that follows player
   return [
     player.position.x,
-    player.position.y + 15,
-    player.position.z + 10
+    player.position.y + 25,
+    player.position.z + 15
   ]
 })
 
@@ -118,11 +118,19 @@ onMounted(() => {
       class="absolute inset-0"
     >
       <!-- Lighting -->
-      <ambientLight :intensity="0.6" />
-      <directionalLight 
-        :position="[50, 50, 25]" 
-        :intensity="0.8"
-        cast-shadow
+      <TresAmbientLight :intensity="0.8" />
+      <TresDirectionalLight 
+        :position="[50, 50, 50]" 
+        :intensity="1.2"
+        :cast-shadow="true"
+      />
+      
+      <!-- Camera -->
+      <TresPerspectiveCamera
+        ref="camera"
+        :position="cameraPosition"
+        :look-at="cameraTarget"
+        :fov="60"
       />
       
       <!-- Level Geometry -->
@@ -144,14 +152,6 @@ onMounted(() => {
         :key="player.id"
         :player="player"
         :is-local="false"
-      />
-      
-      <!-- Camera -->
-      <perspectiveCamera
-        ref="camera"
-        :position="cameraPosition"
-        :look-at="cameraTarget"
-        :fov="60"
       />
     </TresCanvas>
     

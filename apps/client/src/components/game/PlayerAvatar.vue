@@ -12,49 +12,49 @@ const props = withDefaults(defineProps<Props>(), {
 </script>
 
 <template>
-  <group 
+  <TresGroup 
     :position="[player.position.x, player.position.y, player.position.z]"
     :rotation-y="player.rotation"
   >
     <!-- Player Body (Simple Box for now) -->
-    <mesh :position="[0, 0.5, 0]">
-      <boxGeometry :args="[0.8, 1, 0.4]" />
-      <meshLambertMaterial :color="player.avatar.colors.clothing" />
-    </mesh>
+    <TresMesh :position="[0, 0.5, 0]">
+      <TresBoxGeometry :args="[0.8, 1, 0.4]" />
+      <TresMeshLambertMaterial :color="player.avatar.colors.clothing" />
+    </TresMesh>
     
     <!-- Player Head -->
-    <mesh :position="[0, 1.2, 0]">
-      <boxGeometry :args="[0.4, 0.4, 0.4]" />
-      <meshLambertMaterial :color="player.avatar.colors.skin" />
-    </mesh>
+    <TresMesh :position="[0, 1.2, 0]">
+      <TresBoxGeometry :args="[0.4, 0.4, 0.4]" />
+      <TresMeshLambertMaterial :color="player.avatar.colors.skin" />
+    </TresMesh>
     
     <!-- Hair -->
-    <mesh :position="[0, 1.4, 0]">
-      <boxGeometry :args="[0.45, 0.2, 0.45]" />
-      <meshLambertMaterial :color="player.avatar.colors.hair" />
-    </mesh>
+    <TresMesh :position="[0, 1.4, 0]">
+      <TresBoxGeometry :args="[0.45, 0.2, 0.45]" />
+      <TresMeshLambertMaterial :color="player.avatar.colors.hair" />
+    </TresMesh>
     
     <!-- Local Player Indicator -->
-    <mesh 
+    <TresMesh 
       v-if="isLocal" 
       :position="[0, 2.5, 0]"
     >
-      <ringGeometry :args="[0.3, 0.5, 8]" />
-      <meshBasicMaterial 
+      <TresRingGeometry :args="[0.3, 0.5, 8]" />
+      <TresMeshBasicMaterial 
         color="#00ff00" 
         :transparent="true" 
         :opacity="0.8"
       />
-    </mesh>
+    </TresMesh>
     
     <!-- Player Name/ID (floating text would go here in a real implementation) -->
-    <mesh :position="[0, 2, 0]">
-      <boxGeometry :args="[0.1, 0.1, 0.1]" />
-      <meshBasicMaterial 
+    <TresMesh :position="[0, 2, 0]">
+      <TresBoxGeometry :args="[0.1, 0.1, 0.1]" />
+      <TresMeshBasicMaterial 
         :color="isLocal ? '#00ff00' : '#ffffff'" 
         :transparent="true" 
         :opacity="0.6"
       />
-    </mesh>
-  </group>
+    </TresMesh>
+  </TresGroup>
 </template>

@@ -21,58 +21,58 @@ const trackMarkers = computed(() => [
 </script>
 
 <template>
-  <group>
+  <TresGroup>
     <!-- Ground Plane -->
-    <mesh :position="[0, -0.1, 0]" receive-shadow>
-      <planeGeometry :args="[100, 100]" />
-      <meshLambertMaterial color="#2d5016" />
-    </mesh>
+    <TresMesh :position="[0, -0.1, 0]" :rotation="[-Math.PI / 2, 0, 0]" :receive-shadow="true">
+      <TresPlaneGeometry :args="[100, 100]" />
+      <TresMeshLambertMaterial color="#4a7c2a" />
+    </TresMesh>
     
     <!-- Start Portal -->
-    <mesh 
+    <TresMesh 
       :position="[start.x, start.y + 2, start.z]"
       @click="() => console.log('Start portal clicked!')"
     >
-      <ringGeometry :args="[1.5, 2, 16]" />
-      <meshBasicMaterial 
+      <TresRingGeometry :args="[1.5, 2, 16]" />
+      <TresMeshBasicMaterial 
         color="#00ffff" 
         :transparent="true" 
         :opacity="0.7"
       />
-    </mesh>
+    </TresMesh>
     
     <!-- End Portal -->
-    <mesh 
+    <TresMesh 
       :position="[end.x, end.y + 2, end.z]"
       @click="() => console.log('End portal clicked!')"
     >
-      <ringGeometry :args="[1.5, 2, 16]" />
-      <meshBasicMaterial 
+      <TresRingGeometry :args="[1.5, 2, 16]" />
+      <TresMeshBasicMaterial 
         color="#ffff00" 
         :transparent="true" 
         :opacity="0.7"
       />
-    </mesh>
+    </TresMesh>
     
     <!-- Simple racing track boundary markers -->
-    <mesh 
+    <TresMesh 
       v-for="(marker, index) in trackMarkers" 
       :key="`marker-${index}`"
       :position="marker"
     >
-      <boxGeometry :args="[0.2, 2, 0.2]" />
-      <meshBasicMaterial color="#ffffff" />
-    </mesh>
+      <TresBoxGeometry :args="[0.2, 2, 0.2]" />
+      <TresMeshBasicMaterial color="#ffffff" />
+    </TresMesh>
     
     <!-- Simple obstacles for demo -->
-    <mesh :position="[-5, 0.5, 0]">
-      <boxGeometry :args="[1, 1, 1]" />
-      <meshLambertMaterial color="#666666" />
-    </mesh>
+    <TresMesh :position="[-5, 0.5, 0]">
+      <TresBoxGeometry :args="[1, 1, 1]" />
+      <TresMeshLambertMaterial color="#666666" />
+    </TresMesh>
     
-    <mesh :position="[5, 1.5, 0]">
-      <cylinderGeometry :args="[0.5, 0.5, 3, 8]" />
-      <meshLambertMaterial color="#8B4513" />
-    </mesh>
-  </group>
+    <TresMesh :position="[5, 1.5, 0]">
+      <TresCylinderGeometry :args="[0.5, 0.5, 3, 8]" />
+      <TresMeshLambertMaterial color="#8B4513" />
+    </TresMesh>
+  </TresGroup>
 </template>

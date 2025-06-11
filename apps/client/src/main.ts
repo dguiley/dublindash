@@ -5,7 +5,6 @@ import App from './App.vue'
 import IndexPage from './pages/index.vue'
 import GamePage from './pages/game.vue'
 import './style.css'
-import './three-extends' // Import Three.js extensions globally
 
 const routes = [
   { path: '/', component: IndexPage, meta: { title: 'DublinDash - Racing Game' } },

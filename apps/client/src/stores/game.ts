@@ -40,7 +40,9 @@ export const useGameStore = defineStore('game', () => {
   
   const movePlayer = (direction: Vector3) => {
     const player = localPlayer.value
-    if (!player || !isRacing.value) return
+    if (!player) return
+    
+    console.log('🎮 Moving player:', direction, 'Racing:', isRacing.value)
     
     // Apply movement with momentum
     const acceleration = player.godMode ? 2.0 : 0.5
@@ -147,7 +149,7 @@ export const useGameStore = defineStore('game', () => {
     const playerId = 'player-' + Date.now()
     const player: Player = {
       id: playerId,
-      position: { x: 0, y: 0, z: -10 },
+      position: { x: 0, y: 1, z: -10 },
       velocity: { x: 0, y: 0, z: 0 },
       rotation: 0,
       avatar: localAvatar.value,
