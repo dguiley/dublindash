@@ -1,6 +1,162 @@
-# User-Defined Preferred Patterns and Preferences
+# Technical Preferences & Stack Guidance
 
-See example files in this folder.
-list out your technical preferences, patterns you like to follow, language framework or starter project preferences. 
+## Development Philosophy
+**Style**: Pragmatic, simplicity, rigor for key architecture and style, fluid and fast everywhere else
+- Rigor where it matters (types, architecture, security)
+- Fluid and fast for iteration, UI, and experimentation
+- Pragmatic choices over theoretical purity
 
-Anything you learn or prefer over time to drive future project choices, add the here.
+## Default Tech Stack (2024+)
+
+### Frontend
+- **TypeScript** - Strict typing, prefer `undefined` over `null`
+- **Vue 3** - Composition API, `<script setup>`, file-based routing
+- **Tailwind CSS** - Utility-first, custom design system
+- **shadcn-vue** - Accessible, customizable components
+- **Vite** - Fast dev server, HMR, modern bundling
+- **pnpm** - Fast, efficient package management
+
+### Backend  
+- **Node.js + TypeScript** - Type-safe backend
+- **Fastify** - High performance, plugin ecosystem
+- **TypeORM** - Type-safe ORM
+- **Flyway** - migrations
+- **Zod** - Runtime validation + TypeScript inference
+
+### DevOps & Tooling
+- **ESLint + Prettier** - Code quality and formatting
+- **Vitest** - Fast unit testing
+- **Playwright** - E2E testing
+- **Docker** - Containerization
+- **GitHub Actions** - CI/CD
+
+## Project Type Adaptations
+
+### Enterprise Projects
+- **Architecture**: Microservices, event-driven, CQRS patterns
+- **Stack additions**: NestJS, Redis, PostgreSQL, Kubernetes
+- **Process**: Comprehensive testing, formal documentation, github action deployments, kubernetes
+- **Patterns**: Domain-driven design, clean architecture, extensive logging
+
+### One-shot Experiments  
+- **Architecture**: Monolith, simple patterns, MVP-focused
+- **Stack simplifications**: SQLite, single container, minimal dependencies
+- **Process**: Rapid prototyping, lightweight testing, quick deployment
+- **Patterns**: Pragmatic shortcuts, focused scope, fast iteration
+
+### Indie Fun Projects
+- **Architecture**: Simple but scalable, user-focused features
+- **Stack**: Full default stack, focus on UX polish
+- **Process**: Feature-driven development, user feedback loops
+- **Patterns**: Creative solutions, delightful interactions, personality
+
+### Low Dependency High Performance Microservices
+- **Architecture**: Single responsibility, minimal surface area
+- **Stack reductions**: Remove shadcn-vue, minimal Tailwind, native HTTP
+- **Process**: Performance budgets, load testing, monitoring
+- **Patterns**: Zero-copy operations, connection pooling, caching layers
+
+## Code-Level Guidance
+
+### TypeScript Conventions
+```typescript
+// ✅ Prefer undefined over null
+interface User {
+  email: string
+  avatar?: string  // not `avatar: string | null`
+}
+
+// ✅ Strict function signatures
+const handleUser = (user: User): Promise<void> => { ... }
+
+// ✅ Type guards for runtime safety
+const isUser = (obj: unknown): obj is User => {
+  return typeof obj === 'object' && obj !== null && 'email' in obj
+}
+```
+
+### Vue 3 Patterns
+```vue
+<script setup lang="ts">
+// ✅ Composition API with TypeScript
+interface Props {
+  user: User
+  isActive?: boolean
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  isActive: false
+})
+
+// ✅ Typed emits
+const emit = defineEmits<{
+  'user-updated': [user: User]
+}>()
+</script>
+
+<template>
+  <!-- ✅ Template with Tailwind utilities -->
+  <div class="flex items-center gap-4 p-4 bg-white rounded-lg shadow">
+    <!-- content -->
+  </div>
+</template>
+
+<route lang="json">
+{
+  "meta": {
+    "title": "User Profile"
+  }
+}
+</route>
+```
+
+### Component Organization
+- **File structure**: `script → template → style → route`
+- **Component naming**: PascalCase files, kebab-case in templates
+- **Props**: Immutable, use emits for changes
+- **Composables**: Extract reusable logic with `use*` prefix
+
+### State Management
+- **Local state**: `ref()` for primitives, `reactive()` for objects
+- **Global state**: Pinia stores with TypeScript
+- **Server state**: Consider TanStack Query for caching
+- **Form state**: Vee-Validate for complex forms
+
+### Styling Strategy
+- **Utility-first**: Tailwind for layout, spacing, colors
+- **Components**: shadcn-vue for interactive elements
+- **Custom**: CSS modules for one-off components
+- **Themes**: CSS custom properties for design tokens
+
+### API Design
+- **REST**: Resource-based URLs, HTTP verbs, status codes
+- **Validation**: Zod schemas shared between client/server
+- **Errors**: Structured error responses with codes
+- **Types**: Generate TypeScript from OpenAPI specs
+
+### Performance Priorities
+1. **Core Web Vitals** - LCP, FID, CLS optimization
+2. **Bundle size** - Tree shaking, code splitting
+3. **Runtime** - Efficient algorithms, avoid memory leaks
+4. **Network** - Request batching, caching strategies
+
+### Testing Philosophy
+- **Unit**: Pure functions, utilities, composables
+- **Integration**: API endpoints, database interactions  
+- **E2E**: Critical user journeys, happy paths
+- **Visual**: Storybook for component documentation
+
+## Decision Framework
+
+When choosing technologies, consider:
+1. **Type safety** - Can errors be caught at compile time?
+2. **Developer experience** - Is it enjoyable and productive?
+3. **Performance** - Does it meet our speed requirements?
+4. **Ecosystem** - Strong community and plugin support?
+5. **Maintenance** - Long-term viability and updates?
+
+## Evolution Notes
+- Keep this document updated with lessons learned
+- Document successful patterns for reuse
+- Record anti-patterns to avoid
+- Update stack choices as ecosystem evolves
