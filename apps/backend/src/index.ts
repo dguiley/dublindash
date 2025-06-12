@@ -31,7 +31,7 @@ await fastify.register(cors, {
 // Static file serving (for production)
 if (process.env.NODE_ENV === 'production') {
   await fastify.register(staticFiles, {
-    root: path.join(__dirname, '../client/dist'),
+    root: path.join(__dirname, '../frontend/dist'),
     prefix: '/'
   })
 }

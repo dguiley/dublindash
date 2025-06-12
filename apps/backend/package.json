@@ -1,5 +1,5 @@
 {
-  "name": "dublindash-server",
+  "name": "dublindash-backend",
   "version": "1.0.0",
   "description": "DublinDash multiplayer game server",
   "main": "dist/index.js",

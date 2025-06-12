@@ -32,11 +32,11 @@ For strategic planning, use BMAD Method:
 ### Key Files
 ```
 apps/
-├── client/src/
+├── frontend/src/
 │   ├── stores/          # Pinia stores (game, multiplayer)
 │   ├── components/      # Vue components
 │   └── composables/     # Reusable logic
-└── server/src/
+└── backend/src/
     ├── game/           # Game logic & state
     ├── bot-ai/         # Bot personalities
     └── level-gen/      # AI level generation
@@ -53,7 +53,7 @@ apps/
 ### For Code Changes:
 1. **Identify**: Which component needs changes
 2. **Implement**: Follow TypeScript/Vue patterns
-3. **Test**: Both servers running (client:5173, server:3001)
+3. **Test**: Both servers running (frontend:5173, backend:3001)
 4. **Iterate**: Hot reload for fast feedback
 
 ### For Planning:
@@ -156,8 +156,8 @@ const showDialog = ref(false)
 
 ### Essential Files
 - `CODING-STANDARDS.md` - Development patterns
-- `apps/client/src/stores/game.ts` - Main game state
-- `apps/server/src/index.ts` - Server entry point
+- `apps/frontend/src/stores/game.ts` - Main game state
+- `apps/backend/src/index.ts` - Backend entry point
 - `packages/shared/types.ts` - Shared TypeScript types
 
 ### Documentation
@@ -167,8 +167,8 @@ const showDialog = ref(false)
 ## Development Commands
 ```bash
 # Start development
-cd apps/client && npm run dev  # Frontend (port 5173)
-cd apps/server && npm run dev  # Backend (port 3001)
+cd apps/frontend && npm run dev  # Frontend (port 5173)
+cd apps/backend && npm run dev  # Backend (port 3001)
 
 # Type checking
 npm run type-check
