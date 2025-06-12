@@ -20,7 +20,7 @@ This approach is faster, more reliable, and easier to debug than having Vercel b
    - Click "Add New..." → "Project"
    - Import your GitHub repository (dguiley/dublindash)
    - **Framework Preset:** Other (since GitHub Actions handles building)
-   - **Root Directory:** `apps/frontend` (click "Edit" and change it)
+   - **Root Directory:** `apps/frontend` (⚠️ CRITICAL: Click "Edit" and set this exactly!)
    - **Build Settings:**
      - Build Command: (leave empty - GitHub Actions handles this)
      - Output Directory: `dist`
@@ -39,7 +39,7 @@ This approach is faster, more reliable, and easier to debug than having Vercel b
    - Click "Add New..." → "Project"
    - Import the same repository again (dguiley/dublindash)
    - **Framework Preset:** Other
-   - **Root Directory:** `apps/backend` (click "Edit" and change it)
+   - **Root Directory:** `apps/backend` (⚠️ CRITICAL: Click "Edit" and set this exactly!)
    - **Build Settings:**
      - Build Command: (leave empty - GitHub Actions handles this)
      - Output Directory: `dist`
@@ -115,6 +115,12 @@ Add these repository secrets:
 - Ensure pnpm workspace configuration is correct
 - Verify all dependencies are in package.json files
 - Check that build commands work locally with `pnpm --filter` syntax
+
+### If deployment fails with path errors:
+- **Error**: "The provided path does not exist" with nested paths like `/apps/frontend/apps/frontend`
+- **Solution**: Your Vercel project's Root Directory is wrong
+- **Fix**: Go to Vercel Project Settings → General → Root Directory and set it to exactly `apps/frontend` or `apps/backend`
+- **Re-deploy**: Push another commit to trigger GitHub Actions again
 
 ### Domain Setup (Optional):
 - You can add custom domains in Vercel project settings
