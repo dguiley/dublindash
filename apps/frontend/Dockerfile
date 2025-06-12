@@ -7,6 +7,5 @@ COPY dist/ /usr/share/nginx/html
 EXPOSE 3000
 
 # This will inject environment variables into env.js at runtime
-CMD export && \
-    echo "window.env = $(jq -n env | grep -E '^(BACKEND_|APP_)')" > /usr/share/nginx/html/env.js && \
+CMD echo "window.env = $(jq -n 'env | with_entries(select(.key | test("^(BACKEND_|APP_)")))')" > /usr/share/nginx/html/env.js && \
     nginx -g 'daemon off;'
