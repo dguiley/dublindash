@@ -289,6 +289,37 @@ export const useGameStore = defineStore('game', () => {
     const randomBiome = biomes[Math.floor(Math.random() * biomes.length)]
     return generateTerrainLevel(randomBiome)
   }
+
+  const generateNewLevel = async (biome?: BiomeType) => {
+    console.log('🔄 Generating new level...')
+    
+    if (biome) {
+      await generateTerrainLevel(biome)
+    } else {
+      await generateRandomLevel()
+    }
+    
+    // Reset all players to new start position if they exist
+    if (currentLevel.value) {
+      const startPos = currentLevel.value.geometry.portals.start
+      allPlayers.value.forEach(player => {
+        player.position = { ...startPos, y: startPos.y + 1 }
+        player.velocity = { x: 0, y: 0, z: 0 }
+        player.lapProgress = 0
+        player.finished = false
+        player.lapTime = undefined
+      })
+      console.log('🎮 Players reset to new start position')
+    }
+  }
+
+  // Initialize with terrain level by default
+  const initializeDefaultLevel = async () => {
+    if (!currentLevel.value) {
+      console.log('🌍 No level exists, generating default terrain level...')
+      await generateTerrainLevel('temperate_forest')
+    }
+  }
   
   // Easter eggs and debug functions
   const toggleDebugMode = () => {
@@ -355,6 +386,8 @@ export const useGameStore = defineStore('game', () => {
     createDemoLevel,
     generateTerrainLevel,
     generateRandomLevel,
+    generateNewLevel,
+    initializeDefaultLevel,
     toggleDebugMode
   }
 })

@@ -23,7 +23,7 @@ const emit = defineEmits<{
   'show-avatar-creator': []
 }>()
 
-const startMultiplayer = (): void => {
+const startMultiplayer = async (): Promise<void> => {
   if (!multiplayerStore.isConnected) {
     console.warn('Not connected to server')
     return
@@ -42,6 +42,14 @@ const startMultiplayer = (): void => {
   // Join multiplayer game if we have an avatar
   if (gameStore.localAvatar) {
     console.log('🎮 Joining game with avatar...')
+    
+    // Generate terrain level first if none exists
+    if (!gameStore.currentLevel) {
+      console.log('🌍 No level exists, generating terrain level...')
+      loadingMessage.value = "Generating beautiful terrain..."
+      await gameStore.generateTerrainLevel('temperate_forest')
+    }
+    
     multiplayerStore.joinGame(gameStore.localAvatar)
     
     // Server will automatically create demo level and start racing
@@ -61,6 +69,35 @@ const startMultiplayer = (): void => {
 
 const showAvatarCreator = (): void => {
   emit('show-avatar-creator')
+}
+
+const startSingleplayer = async (): Promise<void> => {
+  console.log('🎮 Starting singleplayer mode with terrain generation...')
+  
+  loading.value = true
+  loadingMessage.value = "Generating beautiful terrain..."
+  
+  try {
+    // Generate a new terrain level
+    await gameStore.generateTerrainLevel('temperate_forest')
+    
+    // Create local player if we have an avatar
+    if (gameStore.localAvatar) {
+      gameStore.createLocalPlayer()
+      gameStore.startRace()
+    } else {
+      emit('show-avatar-creator')
+    }
+  } catch (error) {
+    console.error('Failed to start singleplayer:', error)
+    // Fallback to demo level
+    gameStore.createDemoLevel()
+    if (gameStore.localAvatar) {
+      gameStore.createLocalPlayer()
+    }
+  } finally {
+    loading.value = false
+  }
 }
 </script>
 
@@ -92,10 +129,18 @@ const showAvatarCreator = (): void => {
       <div class="space-y-4">
         <button 
           @click="startMultiplayer"
-          :disabled="!multiplayerStore.isConnected"
+          :disabled="!multiplayerStore.isConnected || loading"
           class="block mx-auto btn btn-primary px-8 py-4 text-xl font-bold disabled:cursor-not-allowed"
         >
-          🎮 Start Racing
+          🎮 Start Racing (Multiplayer)
+        </button>
+        
+        <button 
+          @click="startSingleplayer"
+          :disabled="loading"
+          class="block mx-auto btn btn-primary px-8 py-4 text-xl font-bold disabled:cursor-not-allowed"
+        >
+          🌍 Test Terrain (Singleplayer)
         </button>
         
         <button 

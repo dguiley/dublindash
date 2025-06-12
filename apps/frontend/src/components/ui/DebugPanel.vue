@@ -99,13 +99,23 @@
           </button>
         </div>
         
-        <button 
-          @click="generateRandom"
-          :disabled="gameStore.isGeneratingTerrain"
-          class="w-full mt-1 px-2 py-1 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 rounded text-xs transition-colors"
-        >
-          {{ gameStore.isGeneratingTerrain ? '⏳ Generating...' : '🎲 Random Terrain' }}
-        </button>
+        <div class="grid grid-cols-2 gap-1 mt-1">
+          <button 
+            @click="generateRandom"
+            :disabled="gameStore.isGeneratingTerrain"
+            class="px-2 py-1 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 rounded text-xs transition-colors"
+          >
+            {{ gameStore.isGeneratingTerrain ? '⏳ Gen...' : '🎲 Random' }}
+          </button>
+          
+          <button 
+            @click="generateNew"
+            :disabled="gameStore.isGeneratingTerrain"
+            class="px-2 py-1 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-600 rounded text-xs transition-colors"
+          >
+            🔄 New Level
+          </button>
+        </div>
       </div>
       
       <!-- Level Info -->
@@ -208,6 +218,10 @@ const generateWetlands = () => {
 
 const generateRandom = () => {
   gameStore.generateRandomLevel()
+}
+
+const generateNew = () => {
+  gameStore.generateNewLevel()
 }
 
 const formatVector = (v: Vector3) => 
