@@ -1,7 +1,8 @@
 {
-  "buildCommand": "npm run build",
+  "buildCommand": "cd ../.. && pnpm install && pnpm --filter dublindash-frontend build",
   "outputDirectory": "dist",
-  "devCommand": "npm run dev",
+  "installCommand": "cd ../.. && pnpm install --frozen-lockfile",
+  "devCommand": "pnpm run dev",
   "framework": "vue",
   "rewrites": [
     {
