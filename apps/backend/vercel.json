@@ -1,8 +1,5 @@
 {
-  "buildCommand": "cd ../.. && pnpm install && pnpm --filter dublindash-backend build",
   "outputDirectory": "dist",
-  "installCommand": "cd ../.. && pnpm install --frozen-lockfile",
-  "devCommand": "pnpm run dev",
   "functions": {
     "dist/index.js": {
       "runtime": "@vercel/node@3.0.7",
