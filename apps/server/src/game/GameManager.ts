@@ -1,4 +1,4 @@
-import type { Player, GameState, LevelData, AvatarData, Vector3 } from '@shared/types.js'
+import type { Player, GameState, LevelData, AvatarData, Vector3, MovementInput } from '@shared/types.js'
 
 export class GameManager {
   private players: Map<string, Player> = new Map()
@@ -14,9 +14,16 @@ export class GameManager {
       'NitroBoost', 'HyperDrive', 'VelocityVibe', 'RushMode'
     ]
     
+    // Get start portal position if level exists
+    const startPortal = this.currentLevel?.geometry.portals.start || { x: 0, y: 0, z: -15 }
+    
     const player: Player = {
       id: socketId,
-      position: { x: 0, y: 0, z: -10 },
+      position: { 
+        x: startPortal.x + (Math.random() - 0.5) * 4, // Spread around portal
+        y: startPortal.y + 1, 
+        z: startPortal.z + (Math.random() - 0.5) * 2 
+      },
       velocity: { x: 0, y: 0, z: 0 },
       rotation: 0,
       avatar,
@@ -25,15 +32,20 @@ export class GameManager {
       name: name || randomNames[Math.floor(Math.random() * randomNames.length)]
     }
     
-    // Add some random starting position variation
-    player.position.x += (Math.random() - 0.5) * 4
-    player.position.z += (Math.random() - 0.5) * 2
-    
     this.players.set(socketId, player)
     
-    // Start a demo level if this is the first player
-    if (this.players.size === 1 && !this.currentLevel) {
+    // Create a demo level if none exists
+    if (!this.currentLevel) {
+      console.log('🌍 No level exists, creating demo level...')
       this.createDemoLevel()
+      console.log('🌍 Demo level created, phase is now:', this.gamePhase)
+    } else {
+      console.log('🌍 Level exists, adding player to existing level')
+      console.log('🌍 Current phase:', this.gamePhase)
+      // Reset player to start position of existing level
+      const start = this.currentLevel.geometry.portals.start
+      player.position = { ...start, y: 0 }
+      player.position.x += (Math.random() - 0.5) * 4 // Spread out players
     }
     
     return player
@@ -76,6 +88,32 @@ export class GameManager {
     if (movement.x !== 0 || movement.z !== 0) {
       player.rotation = Math.atan2(movement.x, movement.z)
     }
+  }
+  
+  updatePlayerInputs(socketId: string, inputs: MovementInput): void {
+    const player = this.players.get(socketId)
+    if (!player) return
+    
+    // Convert inputs to movement vector
+    const movement = { x: 0, y: 0, z: 0 }
+    
+    if (inputs.forward) movement.z -= 1
+    if (inputs.backward) movement.z += 1
+    if (inputs.left) movement.x -= 1
+    if (inputs.right) movement.x += 1
+    if (inputs.jump) movement.y += 1
+    
+    // Normalize diagonal movement
+    const length = Math.sqrt(movement.x ** 2 + movement.z ** 2)
+    if (length > 0) {
+      movement.x /= length
+      movement.z /= length
+    }
+    
+    // Validate inputs server-side (anti-cheat)
+    // For now, just apply the movement like before
+    // In the future, we can add more sophisticated validation
+    this.updatePlayerMovement(socketId, movement)
   }
   
   updatePhysics(deltaTime: number): void {
@@ -192,8 +230,10 @@ export class GameManager {
     }
     
     this.currentLevel = demoLevel
+    console.log('🌍 Setting game phase to racing...')
     this.gamePhase = 'racing'
     this.gameTimer = 0
+    console.log('🌍 Game phase set to:', this.gamePhase)
     
     // Reset all players
     this.players.forEach(player => {
@@ -211,13 +251,15 @@ export class GameManager {
   }
   
   getGameState(): GameState {
-    return {
+    const gameState = {
       phase: this.gamePhase,
       timer: this.gameTimer,
       players: Array.from(this.players.values()).map(p => this.sanitizePlayer(p)),
       level: this.currentLevel,
       maxPlayers: 50
     }
+    // Only log phase changes, not every call
+    return gameState
   }
   
   sanitizePlayer(player: Player): Player {

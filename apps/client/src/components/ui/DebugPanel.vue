@@ -1,6 +1,6 @@
 <template>
-  <div class="absolute top-4 right-4 bg-red-900/90 text-white p-4 rounded-lg max-w-xs">
-    <h3 class="text-lg font-bold mb-3 text-red-400">🚀 DEBUG MODE</h3>
+  <div class="absolute top-4 right-4 bg-slate-900/95 text-white p-4 rounded-lg max-w-md max-h-96 overflow-y-auto">
+    <h3 class="text-lg font-bold mb-3 text-green-400">🚀 DEBUG MODE</h3>
     
     <div class="space-y-2 text-sm">
       <!-- Game State -->
@@ -15,7 +15,7 @@
       </div>
       
       <!-- Local Player Info -->
-      <div v-if="gameStore.localPlayer" class="border-t border-red-600 pt-2 mt-2">
+      <div v-if="gameStore.localPlayer" class="border-t border-slate-600 pt-2 mt-2">
         <strong>Local Player:</strong>
         <div class="ml-2 text-xs">
           <div>ID: {{ gameStore.localPlayer.id.slice(-8) }}</div>
@@ -29,7 +29,7 @@
       </div>
       
       <!-- Quick Actions -->
-      <div class="border-t border-red-600 pt-2 mt-2">
+      <div class="border-t border-slate-600 pt-2 mt-2">
         <strong>Quick Actions:</strong>
         <div class="grid grid-cols-2 gap-1 mt-1">
           <button 
@@ -63,7 +63,7 @@
       </div>
       
       <!-- Level Info -->
-      <div v-if="gameStore.currentLevel" class="border-t border-red-600 pt-2 mt-2">
+      <div v-if="gameStore.currentLevel" class="border-t border-slate-600 pt-2 mt-2">
         <strong>Level:</strong>
         <div class="ml-2 text-xs">
           <div>Biome: {{ gameStore.currentLevel.biome }}</div>
@@ -72,8 +72,41 @@
         </div>
       </div>
       
+      <!-- Event Stream -->
+      <div class="border-t border-slate-600 pt-2 mt-2">
+        <strong>Event Stream:</strong>
+        <div class="mt-1 max-h-32 overflow-y-auto bg-black/30 p-2 rounded text-xs font-mono">
+          <div v-if="multiplayerStore.eventStream.length === 0" class="text-gray-400">
+            No events yet...
+          </div>
+          <div 
+            v-for="event in multiplayerStore.eventStream.slice(0, 10)" 
+            :key="event.id"
+            class="mb-1 text-xs"
+            :class="{
+              'text-green-400': event.type === 'connect',
+              'text-blue-400': event.type === 'game-state',
+              'text-yellow-400': event.type === 'game-state-update',
+              'text-gray-300': !['connect', 'game-state', 'game-state-update'].includes(event.type)
+            }"
+          >
+            <span class="text-gray-500">{{ formatTimestamp(event.timestamp) }}</span>
+            <span class="font-semibold">{{ event.type }}</span>
+            <span v-if="event.type === 'game-state'" class="text-xs">
+              ({{ event.data.phase }}, {{ event.data.playersCount }}p)
+            </span>
+            <span v-else-if="event.type === 'game-state-update'" class="text-xs">
+              ({{ event.data.playersCount }}p)
+            </span>
+            <span v-else-if="event.type === 'connect'" class="text-xs">
+              ({{ event.data.socketId?.slice(-6) }})
+            </span>
+          </div>
+        </div>
+      </div>
+      
       <!-- Console Commands -->
-      <div class="border-t border-red-600 pt-2 mt-2 text-xs">
+      <div class="border-t border-slate-600 pt-2 mt-2 text-xs">
         <strong>Console Commands:</strong>
         <div class="text-green-400 font-mono">
           <div>gameStore.enableGodMode()</div>
@@ -85,7 +118,7 @@
       <!-- Close Button -->
       <button 
         @click="gameStore.toggleDebugMode()"
-        class="w-full mt-3 px-3 py-2 bg-red-600 hover:bg-red-700 rounded font-semibold transition-colors"
+        class="w-full mt-3 px-3 py-2 bg-slate-600 hover:bg-slate-700 rounded font-semibold transition-colors"
       >
         Close Debug Panel
       </button>
@@ -95,9 +128,19 @@
 
 <script setup lang="ts">
 import { useGameStore } from '@/stores/game'
+import { useMultiplayerStore } from '@/stores/multiplayer'
 import type { Vector3 } from '@shared/types'
 
 const gameStore = useGameStore()
+const multiplayerStore = useMultiplayerStore()
+
+const formatTimestamp = (timestamp: number) => {
+  const now = Date.now()
+  const diff = Math.floor((now - timestamp) / 1000)
+  if (diff < 60) return `${diff}s`
+  if (diff < 3600) return `${Math.floor(diff / 60)}m`
+  return `${Math.floor(diff / 3600)}h`
+}
 
 const formatVector = (v: Vector3) => 
   `(${v.x.toFixed(1)}, ${v.y.toFixed(1)}, ${v.z.toFixed(1)})`

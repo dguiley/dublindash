@@ -119,9 +119,17 @@ export class BotAI {
     
     const botId = `bot-${personality.name.toLowerCase().replace(/[^a-z0-9]/g, '')}-${Date.now()}`
     
+    // Get level to spawn at start portal
+    const gameState = gameManager.getGameState()
+    const startPortal = gameState.level?.geometry.portals.start || { x: 0, y: 0, z: -15 }
+    
     const bot: Player & { personality: BotPersonality } = {
       id: botId,
-      position: { x: (Math.random() - 0.5) * 8, y: 0, z: -12 + Math.random() * 4 },
+      position: { 
+        x: startPortal.x + (Math.random() - 0.5) * 4, // Spread around portal
+        y: startPortal.y + 1, 
+        z: startPortal.z + (Math.random() - 0.5) * 2 
+      },
       velocity: { x: 0, y: 0, z: 0 },
       rotation: 0,
       avatar: this.generateBotAvatar(personality),
@@ -136,7 +144,7 @@ export class BotAI {
     // Add to game manager (treating as player)
     gameManager.addPlayer(botId, bot.avatar, bot.name)
     
-    console.log(`🤖 Spawned bot: ${personality.name} (${personality.style})`)
+    console.log(`🚀 Bot ${personality.name} spawned through portal at (${bot.position.x.toFixed(1)}, ${bot.position.z.toFixed(1)})`)
   }
   
   private removeBot(gameManager: GameManager, botId: string): void {
@@ -149,8 +157,31 @@ export class BotAI {
   }
   
   updateBots(gameManager: GameManager): void {
+    const gameState = gameManager.getGameState()
+    const botsToRemove: string[] = []
+    
     this.activeBots.forEach((bot, botId) => {
+      // Check if bot has wandered off the map
+      const mapBounds = gameState.level?.geometry.terrain || { width: 100, height: 100 }
+      const maxDistance = Math.max(mapBounds.width, mapBounds.height) / 2 + 20 // Add buffer
+      
+      const distanceFromCenter = Math.sqrt(
+        bot.position.x ** 2 + bot.position.z ** 2
+      )
+      
+      if (distanceFromCenter > maxDistance) {
+        console.log(`🗑️  Bot ${bot.name} wandered off the map (distance: ${distanceFromCenter.toFixed(1)}), removing...`)
+        botsToRemove.push(botId)
+        return
+      }
+      
+      // Update bot AI
       this.updateBotAI(gameManager, bot)
+    })
+    
+    // Remove bots that wandered off
+    botsToRemove.forEach(botId => {
+      this.removeBot(gameManager, botId)
     })
   }
   
@@ -295,7 +326,7 @@ export class BotAI {
       }
     }
     
-    const colors = styleColors[personality.style] || styleColors.npc
+    const colors = styleColors[personality.style as keyof typeof styleColors] || styleColors.npc
     
     return {
       id: `bot-avatar-${Date.now()}`,
@@ -326,6 +357,14 @@ export class BotAI {
     return false
   }
   
+  // Randomly spawn new bots through the portal
+  maybeSpawnRandomBot(gameManager: GameManager): void {
+    // 2% chance per server tick to spawn a new bot (if under bot limit)
+    if (Math.random() < 0.02 && this.activeBots.size < 6) {
+      this.spawnBot(gameManager)
+    }
+  }
+
   // Fun function to make all bots go chaotic
   enableChaosMode(): void {
     this.activeBots.forEach(bot => {

@@ -3,13 +3,13 @@ import { ref, computed } from 'vue'
 import type { Player, GameState, LevelData, AvatarData, Vector3 } from '@shared/types'
 
 export const useGameStore = defineStore('game', () => {
-  // State
+  // State - Initialize all refs properly for reactivity
   const players = ref<Map<string, Player>>(new Map())
   const localPlayerId = ref<string | undefined>(undefined)
   const localAvatar = ref<AvatarData | undefined>(undefined)
   const currentLevel = ref<LevelData | undefined>(undefined)
-  const gameTimer = ref(0)
-  const debugMode = ref(false)
+  const gameTimer = ref<number>(0)
+  const debugMode = ref<boolean>(false)
   const phase = ref<'lobby' | 'loading' | 'racing' | 'finished'>('lobby')
   
   // Getters
@@ -40,7 +40,11 @@ export const useGameStore = defineStore('game', () => {
   
   const movePlayer = (direction: Vector3) => {
     const player = localPlayer.value
-    if (!player) return
+    console.log('🎮 movePlayer called - Player exists:', !!player, 'ID:', localPlayerId.value)
+    if (!player) {
+      console.warn('❌ No local player found!')
+      return
+    }
     
     console.log('🎮 Moving player:', direction, 'Racing:', isRacing.value)
     
@@ -144,12 +148,21 @@ export const useGameStore = defineStore('game', () => {
   }
   
   const createLocalPlayer = () => {
+    console.log('🎮 createLocalPlayer called - Avatar exists:', !!localAvatar.value)
     if (!localAvatar.value) return
     
     const playerId = 'player-' + Date.now()
+    
+    // Spawn at start portal if level exists, otherwise default position
+    const startPos = currentLevel.value 
+      ? { ...currentLevel.value.geometry.portals.start, y: 1 }
+      : { x: 0, y: 1, z: -15 }
+    
+    console.log('🎮 Creating player with ID:', playerId, 'at position:', startPos)
+    
     const player: Player = {
       id: playerId,
-      position: { x: 0, y: 1, z: -10 },
+      position: startPos,
       velocity: { x: 0, y: 0, z: 0 },
       rotation: 0,
       avatar: localAvatar.value,
@@ -159,6 +172,11 @@ export const useGameStore = defineStore('game', () => {
     
     localPlayerId.value = playerId
     addPlayer(player)
+    
+    console.log('🎮 Local player created and added. Total players:', players.value.size)
+    console.log('🎮 Local player ID set to:', localPlayerId.value)
+    console.log('🎮 Player retrieved:', players.value.get(playerId))
+    
     return player
   }
   

@@ -4,7 +4,7 @@ import cors from '@fastify/cors'
 import staticFiles from '@fastify/static'
 import { GameManager } from './game/GameManager.js'
 import { BotAI } from './bot-ai/BotAI.js'
-import type { Player, AvatarData, Vector3 } from '@shared/types.js'
+import type { Player, AvatarData, Vector3, MovementInput } from '@shared/types.js'
 import path from 'path'
 import { fileURLToPath } from 'url'
 
@@ -86,10 +86,24 @@ io.on('connection', (socket) => {
   
   socket.on('join-game', (data: { avatar: AvatarData; name?: string }) => {
     try {
+      console.log(`🎮 Player ${socket.id} joining game with avatar:`, data.avatar.id)
+      
       const player = gameManager.addPlayer(socket.id, data.avatar, data.name)
+      const gameState = gameManager.getGameState()
+      
+      console.log(`🎮 Game state after adding player - Phase: ${gameState.phase}, Players: ${gameState.players.length}`)
+      console.log(`🎮 Level exists:`, !!gameState.level)
+      console.log(`🎮 Full game state being sent:`, JSON.stringify(gameState, null, 2))
+      console.log(`🎮 Sending game state to player ${socket.id}:`, {
+        phase: gameState.phase,
+        hasLevel: !!gameState.level,
+        playersCount: gameState.players.length
+      })
       
       // Send current game state to new player
-      socket.emit('game-state', gameManager.getGameState())
+      console.log(`🚨 EMITTING GAME-STATE TO ${socket.id} 🚨`)
+      socket.emit('game-state', gameState)
+      console.log(`🚀 GAME-STATE EMITTED TO ${socket.id} 🚀`)
       
       // Notify other players
       socket.broadcast.emit('player-joined', {
@@ -115,6 +129,14 @@ io.on('connection', (socket) => {
       gameManager.updatePlayerMovement(socket.id, movement)
     } catch (error) {
       console.error('Error updating player movement:', error)
+    }
+  })
+  
+  socket.on('player-input', (inputs: MovementInput) => {
+    try {
+      gameManager.updatePlayerInputs(socket.id, inputs)
+    } catch (error) {
+      console.error('Error updating player inputs:', error)
     }
   })
   
@@ -180,18 +202,28 @@ io.on('connection', (socket) => {
 
 // Game loop
 const TICK_RATE = 20 // 20 FPS server tick
+let lastBroadcast = 0
+const BROADCAST_RATE = 1 // 1 FPS for state updates (timer etc)
+
 setInterval(() => {
   try {
     // Update bot AI
     botAI.updateBots(gameManager)
     
+    // Maybe spawn random bots through portal
+    botAI.maybeSpawnRandomBot(gameManager)
+    
     // Update game physics
     gameManager.updatePhysics(1 / TICK_RATE)
     
-    // Broadcast game state to all connected clients
-    const gameState = gameManager.getGameState()
-    if (gameState.players.length > 0) {
-      io.emit('game-state-update', gameState)
+    // Broadcast game state to all connected clients (less frequently)
+    const now = Date.now()
+    if (now - lastBroadcast >= 1000 / BROADCAST_RATE) {
+      const gameState = gameManager.getGameState()
+      if (gameState.players.length > 0) {
+        io.emit('game-state-update', gameState)
+      }
+      lastBroadcast = now
     }
     
   } catch (error) {

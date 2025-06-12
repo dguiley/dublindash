@@ -16,8 +16,19 @@ const showAvatarCreator = ref(false)
 onMounted(() => {
   // Connect to multiplayer server
   multiplayerStore.connect()
-  // Show avatar creator on first load
-  if (!localStorage.getItem('dublin-avatar')) {
+  
+  // Load existing avatar or show creator
+  const savedAvatar = localStorage.getItem('dublin-avatar')
+  if (savedAvatar) {
+    try {
+      const avatar = JSON.parse(savedAvatar)
+      gameStore.setLocalAvatar(avatar)
+      console.log('🎭 Loaded saved avatar:', avatar)
+    } catch (error) {
+      console.error('Failed to parse saved avatar:', error)
+      showAvatarCreator.value = true
+    }
+  } else {
     showAvatarCreator.value = true
   }
   
@@ -43,9 +54,10 @@ const handleAvatarCreated = (avatar: AvatarData): void => {
   localStorage.setItem('dublin-avatar', JSON.stringify(avatar))
   showAvatarCreator.value = false
   
-  // Join multiplayer game if connected
+  // Join multiplayer game if connected - server will handle racing
   if (multiplayerStore.isConnected) {
     multiplayerStore.joinGame(avatar)
+    console.log('🎮 Joined game after avatar creation')
   }
 }
 
@@ -65,6 +77,7 @@ const skipAvatarCreation = (): void => {
 
 <template>
   <div id="app" class="w-full h-screen overflow-hidden">
+    
     <!-- Game Canvas (Full Screen) -->
     <GameCanvas v-if="gameStore.phase === 'racing'" />
     

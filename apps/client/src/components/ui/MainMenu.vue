@@ -29,19 +29,30 @@ const startMultiplayer = (): void => {
     return
   }
   
+  console.log('🚨 START RACING CLICKED!!! 🚨')
+  console.log('🎮 Connected:', multiplayerStore.isConnected)
+  console.log('🎮 Avatar exists:', !!gameStore.localAvatar)
+  console.log('🎮 Avatar:', gameStore.localAvatar)
+  console.log('🎮 Current phase BEFORE join:', gameStore.phase)
+  console.log('🎮 Phase ref type:', typeof gameStore.phase, gameStore.phase)
+  
   loading.value = true
   loadingMessage.value = loadingMessages[Math.floor(Math.random() * loadingMessages.length)]
   
   // Join multiplayer game if we have an avatar
   if (gameStore.localAvatar) {
+    console.log('🎮 Joining game with avatar...')
     multiplayerStore.joinGame(gameStore.localAvatar)
     
-    // Start racing
+    // Server will automatically create demo level and start racing
     setTimeout(() => {
-      gameStore.startRace()
+      console.log('🎮 Phase after join timeout:', gameStore.phase)
+      console.log('🎮 Phase value:', gameStore.phase)
+      console.log('🎮 Is racing computed:', gameStore.isRacing)
       loading.value = false
-    }, 1000)
+    }, 2000) // Give server more time to respond
   } else {
+    console.log('🎮 No avatar found, showing creator')
     // Show avatar creator first
     emit('show-avatar-creator')
     loading.value = false
