@@ -24,10 +24,10 @@ const fastify = Fastify({
 await fastify.register(cors, {
   origin: process.env.NODE_ENV === 'production' 
     ? (origin: string | undefined, callback: (err: Error | null, allowed: boolean) => void) => {
-        // Allow all wilde.house subdomains and localhost (trusted domains)
+        // Allow all wilde.agency subdomains and localhost (trusted domains)
         const allowedDomains = [
-          /\.wilde\.house$/,
-          /^wilde\.house$/,
+          /\.wilde\.agency$/,
+          /^wilde\.agency$/,
           /localhost/,
           /127\.0\.0\.1/
         ]
@@ -52,12 +52,12 @@ const io = new SocketServer(fastify.server, {
   cors: {
     origin: process.env.NODE_ENV === 'production' 
       ? (origin, callback) => {
-          // Allow all wilde.house subdomains and localhost (trusted domains)
+          // Allow all wilde.agency subdomains and localhost (trusted domains)
           const allowedDomains = [
-            /\.wilde\.house$/,
-            /^wilde\.house$/,
-            /^https:\/\/.*\.wilde\.house$/,
-            /^http:\/\/.*\.wilde\.house$/
+            /\.wilde\.agency$/,
+            /^wilde\.agency$/,
+            /^https:\/\/.*\.wilde\.agency$/,
+            /^http:\/\/.*\.wilde\.agency$/
           ]
           if (!origin) return callback(null, true) // Allow same-origin
           const allowed = allowedDomains.some(domain => domain.test(origin))

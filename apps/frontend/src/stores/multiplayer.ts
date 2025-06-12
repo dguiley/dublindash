@@ -39,7 +39,7 @@ export const useMultiplayerStore = defineStore('multiplayer', () => {
     connecting.value = true
 
     // Connect to server
-    const serverUrl = env.SERVER_URL
+    const serverUrl = env.BACKEND_URL
         
     console.log('🔗 Connecting to:', serverUrl)
 

@@ -49,10 +49,12 @@ CMD export && \
 FROM node:18-alpine
 WORKDIR /app
 
-# Copy built application and dependencies
+# Copy built application and package files
 COPY dist/ ./dist/
-COPY node_modules/ ./node_modules/
 COPY package.json ./
+
+# Install production dependencies only
+RUN npm install --production
 
 # Expose port
 EXPOSE 3010
@@ -63,14 +65,14 @@ CMD ["node", "dist/index.js"]
 
 **What it does:**
 - Copies pre-built `dist/` folder from GitHub Actions
-- Copies pre-installed `node_modules/` from GitHub Actions
-- No dependency installation in Docker (super fast!)
-- Runs the compiled JavaScript with dependencies available
+- Installs only production dependencies in Docker
+- Fast build since compilation already done in CI
+- Proper ES module resolution with clean dependency installation
 
 ## Benefits vs Multi-Stage Builds
 
 | Multi-Stage (Old) | Copy Dist (New) |
-|---|---|
+|-------------------|------------------|
 | 🐌 Slow builds | ⚡ Fast builds |
 | 🔧 Complex debugging | 🎯 Simple debugging |
 | 💾 Large intermediate layers | 📦 Minimal layers |

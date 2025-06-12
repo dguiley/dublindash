@@ -87,6 +87,10 @@ jobs:
       - name: Build and push frontend image
         run: |
           cd apps/frontend
+          echo "📋 Files in frontend directory before Docker build:"
+          ls -la
+          echo "📋 Files in dist directory:"
+          ls -la dist/ || echo "❌ No dist directory found"
           docker build -t $DOCKER_REGISTRY/dublindash-frontend:$BUILD_ID .
           docker push $DOCKER_REGISTRY/dublindash-frontend:$BUILD_ID
           echo "✅ Frontend image pushed: $DOCKER_REGISTRY/dublindash-frontend:$BUILD_ID"
@@ -94,6 +98,10 @@ jobs:
       - name: Build and push backend image
         run: |
           cd apps/backend
+          echo "📋 Files in backend directory before Docker build:"
+          ls -la
+          echo "📋 Files in dist directory:"
+          ls -la dist/ || echo "❌ No dist directory found"
           docker build -t $DOCKER_REGISTRY/dublindash-backend:$BUILD_ID .
           docker push $DOCKER_REGISTRY/dublindash-backend:$BUILD_ID
           echo "✅ Backend image pushed: $DOCKER_REGISTRY/dublindash-backend:$BUILD_ID"

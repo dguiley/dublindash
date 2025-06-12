@@ -23,10 +23,7 @@ export function getEnv(key: string, defaultValue?: string): string {
 
 // Convenience getters for common env vars
 export const env = {
-  SERVER_URL: getEnv('BACKEND_URL', 'http://localhost:3010'),
+  BACKEND_URL: getEnv('BACKEND_URL', 'http://localhost:3010'),
   NODE_ENV: getEnv('NODE_ENV', 'development'),
   IS_PRODUCTION: getEnv('NODE_ENV') === 'production',
-  // Production URLs for reference
-  PRODUCTION_FRONTEND: 'https://dublindash.wilde.house',
-  PRODUCTION_BACKEND: 'https://dublindash-api.wilde.house'
 }

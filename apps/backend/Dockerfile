@@ -2,10 +2,12 @@
 FROM node:18-alpine
 WORKDIR /app
 
-# Copy built application and dependencies
+# Copy built application and package files
 COPY dist/ ./dist/
-COPY node_modules/ ./node_modules/
 COPY package.json ./
+
+# Install production dependencies only
+RUN npm install --production
 
 # Expose port
 EXPOSE 3010
