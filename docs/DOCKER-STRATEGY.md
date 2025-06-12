@@ -49,15 +49,10 @@ CMD export && \
 FROM node:18-alpine
 WORKDIR /app
 
-# Install pnpm for package installation
-RUN npm install -g pnpm@10
-
-# Copy built application and package.json
+# Copy built application and dependencies
 COPY dist/ ./dist/
+COPY node_modules/ ./node_modules/
 COPY package.json ./
-
-# Install only production dependencies
-RUN pnpm install --prod --frozen-lockfile
 
 # Expose port
 EXPOSE 3010
@@ -68,9 +63,9 @@ CMD ["node", "dist/index.js"]
 
 **What it does:**
 - Copies pre-built `dist/` folder from GitHub Actions
-- Copies `package.json` for dependency information
-- Installs only production dependencies
-- Runs the compiled JavaScript
+- Copies pre-installed `node_modules/` from GitHub Actions
+- No dependency installation in Docker (super fast!)
+- Runs the compiled JavaScript with dependencies available
 
 ## Benefits vs Multi-Stage Builds
 

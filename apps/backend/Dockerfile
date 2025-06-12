@@ -2,15 +2,10 @@
 FROM node:18-alpine
 WORKDIR /app
 
-# Install pnpm for package installation
-RUN npm install -g pnpm@10
-
-# Copy built application and package.json
+# Copy built application and dependencies
 COPY dist/ ./dist/
+COPY node_modules/ ./node_modules/
 COPY package.json ./
-
-# Install only production dependencies
-RUN pnpm install --prod --frozen-lockfile
 
 # Expose port
 EXPOSE 3010
