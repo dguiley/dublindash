@@ -1,0 +1,63 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dublindash-frontend-$ENVIRONMENT
+spec:
+  selector:
+    matchLabels:
+      app: dublindash-frontend-$ENVIRONMENT
+  replicas: $FRONTEND_REPLICAS
+  template:
+    metadata:
+      labels:
+        app: dublindash-frontend-$ENVIRONMENT
+    spec:
+      containers:
+        - name: dublindash-frontend
+          image: $DOCKER_REGISTRY/dublindash-frontend:$BUILD_ID
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3000
+          env:
+            - name: BACKEND_URL
+              value: "$BACKEND_URL"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dublindash-frontend-service-$ENVIRONMENT
+  labels:
+    app: dublindash-frontend-$ENVIRONMENT
+spec:
+  type: NodePort
+  ports:
+    - port: 80
+      targetPort: 3000
+  selector:
+    app: dublindash-frontend-$ENVIRONMENT
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: dublindash-frontend-ingress-$ENVIRONMENT
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    kubernetes.io/ingress.class: nginx
+spec:
+  tls:
+    - hosts:
+        - $FRONTEND_HOST
+      secretName: dublindash-frontend-tls-$ENVIRONMENT
+  rules:
+    - host: $FRONTEND_HOST
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: dublindash-frontend-service-$ENVIRONMENT
+                port:
+                  number: 80
+---

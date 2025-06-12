@@ -1,0 +1,134 @@
+name: Deploy to Kubernetes
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: "k8s-deploy"
+  cancel-in-progress: true
+
+env:
+  VARS: ${{ vars.VARS }}
+  SECRETS: ${{ secrets.SECRETS }}
+  ENVIRONMENT: main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      # Load environment variables from consolidated VARS and SECRETS
+      - name: load env
+        id: env
+        run: |
+          echo '${{ env.VARS }}' | while IFS='=' read -r key value
+          do
+            if [[ -n "$key" && "$key" != \#* ]]; then
+              trimmed="$(echo -e "$value" | sed -e 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+              echo "$key=$trimmed" >> $GITHUB_ENV
+              echo "$key=$trimmed" >> $GITHUB_OUTPUT
+            fi
+          done 
+          
+          echo '::add-mask::${{ env.SECRETS }}'
+          echo '${{ env.SECRETS }}' | while IFS='=' read -r key value
+          do
+            if [[ -n "$key" && "$key" != \#* ]]; then
+              trimmed="$(echo -e "$value" | sed -e 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+              echo "::add-mask::$trimmed" # Mask the secret value in logs
+              echo "$key=$trimmed" >> $GITHUB_ENV
+              echo "$key=$trimmed" >> $GITHUB_OUTPUT
+            fi
+          done
+          
+          BUILD_ID="${GITHUB_REF_NAME//\//-}-$(date +%Y%m%dT%H%M)-${GITHUB_SHA:0:7}"
+          echo "BUILD_ID=$BUILD_ID" >> $GITHUB_ENV
+          echo "🏗️ Build ID: $BUILD_ID"
+      
+      # Setup AWS credentials
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ steps.env.outputs.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ steps.env.outputs.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ steps.env.outputs.AWS_REGION }}
+      
+      # Login to ECR
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+      
+      # Setup pnpm
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'pnpm'
+      
+      # Install dependencies
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      
+      # Build applications
+      - name: Build frontend
+        run: pnpm --filter dublindash-frontend build
+      
+      - name: Build backend
+        run: pnpm --filter dublindash-backend build
+      
+      # Build and push Docker images
+      - name: Build and push frontend image
+        run: |
+          cd apps/frontend
+          docker build -t $DOCKER_REGISTRY/dublindash-frontend:$BUILD_ID .
+          docker push $DOCKER_REGISTRY/dublindash-frontend:$BUILD_ID
+          echo "✅ Frontend image pushed: $DOCKER_REGISTRY/dublindash-frontend:$BUILD_ID"
+      
+      - name: Build and push backend image
+        run: |
+          cd apps/backend
+          docker build -t $DOCKER_REGISTRY/dublindash-backend:$BUILD_ID .
+          docker push $DOCKER_REGISTRY/dublindash-backend:$BUILD_ID
+          echo "✅ Backend image pushed: $DOCKER_REGISTRY/dublindash-backend:$BUILD_ID"
+      
+      # Deploy to Kubernetes
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig --name $EKS_CLUSTER_NAME --region $AWS_REGION
+          kubectl config use-context $K8S_CONTEXT
+      
+      - name: Deploy backend
+        working-directory: devops/scripts
+        env:
+          # Backend-specific vars
+          BACKEND_REPLICAS: ${{ steps.env.outputs.BACKEND_REPLICAS || '1' }}
+          BACKEND_HOST: ${{ steps.env.outputs.BACKEND_HOST }}
+        run: ./k8s-deploy.sh ../k8s/backend.yaml apply
+      
+      - name: Deploy frontend
+        working-directory: devops/scripts
+        env:
+          # Frontend-specific vars
+          FRONTEND_REPLICAS: ${{ steps.env.outputs.FRONTEND_REPLICAS || '1' }}
+          FRONTEND_HOST: ${{ steps.env.outputs.FRONTEND_HOST }}
+          BACKEND_URL: "https://${{ steps.env.outputs.BACKEND_HOST }}"
+        run: ./k8s-deploy.sh ../k8s/frontend.yaml apply
+      
+      # Verify deployment
+      - name: Verify deployment
+        run: |
+          echo "🔍 Verifying deployments..."
+          kubectl get deployments -l app=dublindash-frontend-$ENVIRONMENT
+          kubectl get deployments -l app=dublindash-backend-$ENVIRONMENT
+          kubectl get services -l app=dublindash-frontend-$ENVIRONMENT
+          kubectl get services -l app=dublindash-backend-$ENVIRONMENT
+          kubectl get ingresses -l app=dublindash-frontend-$ENVIRONMENT
+          kubectl get ingresses -l app=dublindash-backend-$ENVIRONMENT
+          echo "✅ Deployment verification complete!"

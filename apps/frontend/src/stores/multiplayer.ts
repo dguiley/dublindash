@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { io, type Socket } from 'socket.io-client'
 import { useGameStore } from './game'
 import type { GameState, Player, Vector3, MovementInput } from '@shared/types'
+import { env } from '../utils/env'
 
 export const useMultiplayerStore = defineStore('multiplayer', () => {
   // State
@@ -37,10 +38,8 @@ export const useMultiplayerStore = defineStore('multiplayer', () => {
 
     connecting.value = true
 
-    // Connect to local server
-    const serverUrl = import.meta.env.PROD
-        ? 'https://your-production-server.com'
-        : 'http://localhost:3010'
+    // Connect to server
+    const serverUrl = env.SERVER_URL
         
     console.log('🔗 Connecting to:', serverUrl)
 

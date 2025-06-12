@@ -23,8 +23,19 @@ const fastify = Fastify({
 // CORS configuration
 await fastify.register(cors, {
   origin: process.env.NODE_ENV === 'production' 
-    ? ['https://dublindash.vercel.app'] 
-    : ['http://localhost:5173', 'http://127.0.0.1:5173'],
+    ? (origin: string | undefined, callback: (err: Error | null, allowed: boolean) => void) => {
+        // Allow all wilde.house subdomains and localhost (trusted domains)
+        const allowedDomains = [
+          /\.wilde\.house$/,
+          /^wilde\.house$/,
+          /localhost/,
+          /127\.0\.0\.1/
+        ]
+        if (!origin) return callback(null, true) // Allow same-origin requests
+        const allowed = allowedDomains.some(domain => domain.test(origin))
+        callback(null, allowed)
+      }
+    : ['http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:3000'],
   credentials: true
 })
 
@@ -40,8 +51,19 @@ if (process.env.NODE_ENV === 'production') {
 const io = new SocketServer(fastify.server, {
   cors: {
     origin: process.env.NODE_ENV === 'production' 
-      ? ['https://dublindash.vercel.app'] 
-      : ['http://localhost:5173', 'http://127.0.0.1:5173'],
+      ? (origin, callback) => {
+          // Allow all wilde.house subdomains and localhost (trusted domains)
+          const allowedDomains = [
+            /\.wilde\.house$/,
+            /^wilde\.house$/,
+            /^https:\/\/.*\.wilde\.house$/,
+            /^http:\/\/.*\.wilde\.house$/
+          ]
+          if (!origin) return callback(null, true) // Allow same-origin
+          const allowed = allowedDomains.some(domain => domain.test(origin))
+          callback(null, allowed)
+        }
+      : ['http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:3000'],
     credentials: true
   }
 })
