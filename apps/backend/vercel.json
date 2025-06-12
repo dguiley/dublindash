@@ -1,15 +1,4 @@
 {
-  "outputDirectory": "dist",
-  "functions": {
-    "dist/index.js": {
-      "runtime": "@vercel/node@3.0.7",
-      "maxDuration": 30
-    }
-  },
-  "rewrites": [
-    {
-      "source": "/(.*)",
-      "destination": "/dist/index.js"
-    }
-  ]
+  "installCommand": "echo 'Backend cannot be deployed to Vercel - WebSockets not supported. See docs/BACKEND-DEPLOYMENT.md'",
+  "buildCommand": "echo 'Use Railway.app or Render.com for WebSocket support' && exit 1"
 }
