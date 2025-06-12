@@ -13,10 +13,13 @@ const start = computed(() => ({ x: -20, y: 0, z: 0 }))
 const end = computed(() => ({ x: 20, y: 0, z: 0 }))
 
 // Simple track markers for visual boundaries
-const trackMarkers = computed(() => [
-  [-10, 1, -5], [-10, 1, 5],
-  [0, 1, -5], [0, 1, 5],
-  [10, 1, -5], [10, 1, 5]
+const trackMarkers = computed((): [number, number, number][] => [
+  [-10, 1, -5], 
+  [-10, 1, 5],
+  [0, 1, -5], 
+  [0, 1, 5],
+  [10, 1, -5], 
+  [10, 1, 5]
 ])
 </script>
 

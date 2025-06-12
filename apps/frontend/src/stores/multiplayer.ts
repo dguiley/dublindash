@@ -90,13 +90,13 @@ export const useMultiplayerStore = defineStore('multiplayer', () => {
       connecting.value = false
     })
 
-    currentSocket.on('connect_error', (error) => {
+    currentSocket.on('connect_error', (error: Error) => {
       console.error('Connection error:', error)
       connecting.value = false
       serverMessage.value = 'Failed to connect to server. Is it running?'
     })
 
-    currentSocket.on('server-message', (data) => {
+    currentSocket.on('server-message', (data: { message: string }) => {
       console.log('📨 Server message:', data.message)
       serverMessage.value = data.message
     })
@@ -248,12 +248,12 @@ export const useMultiplayerStore = defineStore('multiplayer', () => {
       // Could add a chat UI here
     })
 
-    currentSocket.on('level-data', (levelData) => {
+    currentSocket.on('level-data', (levelData: any) => {
       console.log('🌍 Received new level:', levelData)
       gameStore.setLevel(levelData)
     })
 
-    currentSocket.on('error', (data) => {
+    currentSocket.on('error', (data: { message: string }) => {
       console.error('❌ Server error:', data.message)
       serverMessage.value = data.message
     })

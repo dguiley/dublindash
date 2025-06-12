@@ -29,7 +29,7 @@ watch([zoomOut, mapView], ([newZoomOut, newMapView]) => {
 })
 
 // Camera follows player with smooth interpolation
-const cameraPosition = computed(() => {
+const cameraPosition = computed((): [number, number, number] => {
   const player = gameStore.localPlayer
   const level = gameStore.currentLevel
   
@@ -41,16 +41,16 @@ const cameraPosition = computed(() => {
     const centerZ = (start.z + end.z) / 2
     const distance = Math.sqrt((end.x - start.x) ** 2 + (end.z - start.z) ** 2)
     const height = Math.max(80, distance * 1.2)
-    return [centerX, height, centerZ]
+    return [centerX, height, centerZ] as [number, number, number]
   }
   
   if (!player) {
     // Default camera position when no player
     if (level) {
       const start = level.geometry.portals.start
-      return [start.x, start.y + 25 * cameraZoom.value, start.z + 15 * cameraZoom.value]
+      return [start.x, start.y + 25 * cameraZoom.value, start.z + 15 * cameraZoom.value] as [number, number, number]
     }
-    return [0, 25 * cameraZoom.value, 15 * cameraZoom.value]
+    return [0, 25 * cameraZoom.value, 15 * cameraZoom.value] as [number, number, number]
   }
   
   // Follow player with zoom
@@ -61,7 +61,7 @@ const cameraPosition = computed(() => {
     player.position.x,
     player.position.y + baseHeight,
     player.position.z + baseDistance
-  ]
+  ] as [number, number, number]
 })
 
 const cameraTarget = computed(() => {
@@ -179,7 +179,7 @@ onMounted(() => {
   <div 
     class="relative w-full h-full"
     tabindex="0"
-    @click="$event.target.focus()"
+    @click="(event) => (event.target as HTMLElement)?.focus()"
   >
     <!-- TresJS 3D Scene -->
     <TresCanvas 

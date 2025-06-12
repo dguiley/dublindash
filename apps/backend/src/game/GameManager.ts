@@ -255,7 +255,7 @@ export class GameManager {
       phase: this.gamePhase,
       timer: this.gameTimer,
       players: Array.from(this.players.values()).map(p => this.sanitizePlayer(p)),
-      level: this.currentLevel,
+      level: this.currentLevel || undefined,
       maxPlayers: 50
     }
     // Only log phase changes, not every call

@@ -2,6 +2,13 @@
 
 Follow these steps to create and configure your Vercel projects for DublinDash.
 
+## Architecture Overview
+**Simplified Deployment Strategy:**
+- **GitHub Actions**: Handles all building (installs dependencies, builds frontend/backend)
+- **Vercel**: Just serves pre-built files (no building, no dependency installation)
+
+This approach is faster, more reliable, and easier to debug than having Vercel build everything.
+
 ## Step 1: Create Vercel Account (if needed)
 1. Go to https://vercel.com
 2. Sign up with your GitHub account
@@ -11,13 +18,13 @@ Follow these steps to create and configure your Vercel projects for DublinDash.
 
 1. **From Vercel Dashboard:**
    - Click "Add New..." → "Project"
-   - Import your GitHub repository (wildefam/dublindash)
-   - **Framework Preset:** Vue.js
+   - Import your GitHub repository (dguiley/dublindash)
+   - **Framework Preset:** Other (since GitHub Actions handles building)
    - **Root Directory:** `apps/frontend` (click "Edit" and change it)
    - **Build Settings:**
-     - Build Command: `npm run build`
+     - Build Command: (leave empty - GitHub Actions handles this)
      - Output Directory: `dist`
-     - Install Command: `npm install`
+     - Install Command: (leave empty - no building needed)
    - **Environment Variables:** (Add these)
      - `VITE_SERVER_URL` = (leave empty for now, update after backend deploy)
    - Click "Deploy"
@@ -30,13 +37,13 @@ Follow these steps to create and configure your Vercel projects for DublinDash.
 
 1. **From Vercel Dashboard:**
    - Click "Add New..." → "Project"
-   - Import the same repository again (wildefam/dublindash)
+   - Import the same repository again (dguiley/dublindash)
    - **Framework Preset:** Other
    - **Root Directory:** `apps/backend` (click "Edit" and change it)
    - **Build Settings:**
-     - Build Command: `npm run build`
+     - Build Command: (leave empty - GitHub Actions handles this)
      - Output Directory: `dist`
-     - Install Command: `npm install`
+     - Install Command: (leave empty - no building needed)
    - **Environment Variables:** (Add these)
      - `NODE_ENV` = `production`
      - `PORT` = `3010`
@@ -90,8 +97,11 @@ Add these repository secrets:
 ## Step 8: Trigger Deployment
 
 1. Push any change to the `main` branch
-2. Check Actions tab in GitHub to see deployment progress
-3. Both frontend and backend will deploy automatically
+2. GitHub Actions will:
+   - Build both frontend and backend using pnpm workspaces
+   - Deploy the built artifacts to Vercel
+3. Check Actions tab in GitHub to see build and deployment progress
+4. Vercel just hosts the pre-built files (no building on Vercel)
 
 ## Troubleshooting
 
@@ -101,9 +111,10 @@ Add these repository secrets:
 - Verify environment variables are set correctly
 
 ### If builds fail:
-- Check the root directory is set correctly for each project
-- Ensure all dependencies are in package.json
-- Check build logs in Vercel dashboard
+- Check GitHub Actions logs (not Vercel logs - Vercel doesn't build)
+- Ensure pnpm workspace configuration is correct
+- Verify all dependencies are in package.json files
+- Check that build commands work locally with `pnpm --filter` syntax
 
 ### Domain Setup (Optional):
 - You can add custom domains in Vercel project settings
@@ -111,10 +122,11 @@ Add these repository secrets:
 - Example: `api.yourdomain.com` for backend
 
 ## Success Indicators
+✅ GitHub Actions build and deploy successfully (green checkmarks)
 ✅ Frontend loads at your Vercel URL
 ✅ Backend health check responds at `/health`
 ✅ WebSocket connections work (test with multiple browser tabs)
-✅ GitHub Actions show green checkmarks
+✅ Vercel projects show "Deployed" status (but no build logs)
 
 ## Next Steps
 After successful deployment:
