@@ -8,12 +8,12 @@ on:
 
 env:
   VERCEL_ORG_ID: ${{ vars.VERCEL_ORG_ID }}
-  VERCEL_PROJECT_ID_FRONTEND: ${{ vars.VERCEL_PROJECT_ID_FRONTEND }}
-  VERCEL_PROJECT_ID_BACKEND: ${{ vars.VERCEL_PROJECT_ID_BACKEND }}
 
 jobs:
   deploy-frontend:
     runs-on: ubuntu-latest
+    env:
+      VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID_FRONTEND }}
     steps:
       - uses: actions/checkout@v4
       
@@ -40,6 +40,8 @@ jobs:
 
   deploy-backend:
     runs-on: ubuntu-latest
+    env:
+      VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID_BACKEND }}
     steps:
       - uses: actions/checkout@v4
       
