@@ -16,8 +16,8 @@ Go to your GitHub repository → Settings → Secrets and variables → Actions
 Create a single variable called `VARS` with this content:
 ```
 AWS_REGION=us-east-1
-FRONTEND_HOST=dublindash.wilde.house
-BACKEND_HOST=dublindash-api.wilde.house
+FRONTEND_HOST=dublindash.wilde.agency
+BACKEND_HOST=dublindash-api.wilde.agency
 FRONTEND_REPLICAS=1
 BACKEND_REPLICAS=1
 DOCKER_REGISTRY=683145523527.dkr.ecr.us-east-1.amazonaws.com
@@ -39,7 +39,7 @@ OPENAI_API_KEY=your_openai_api_key_here
 The frontend Dockerfile creates an `env.js` file at runtime:
 ```javascript
 window.env = {
-  "BACKEND_URL": "https://dublindash-api.wilde.house"
+  "BACKEND_URL": "https://dublindash-api.wilde.agency"
 }
 ```
 
@@ -54,10 +54,16 @@ BACKEND_URL=http://localhost:3010
 
 1. **Push to main branch** triggers the workflow
 2. **Build ID generation**: `main-20241212T1430-abc1234`
-3. **Docker builds**: Both frontend and backend images
-4. **ECR push**: Images uploaded to your registry
-5. **K8s deployment**: Using environment variable substitution
-6. **Verification**: Check deployments, services, and ingresses
+3. **GitHub Actions builds**: Frontend and backend compiled in CI
+4. **Docker builds**: Fast copying of pre-built `dist/` folders (no compilation!)
+5. **ECR push**: Images uploaded to your registry
+6. **K8s deployment**: Using environment variable substitution
+7. **Verification**: Check deployments, services, and ingresses
+
+### Build Strategy Benefits
+✅ **Fast Docker builds** - No compilation, just file copying
+✅ **Easy debugging** - Build errors visible in GitHub Actions logs
+✅ **Better caching** - CI caches dependencies across builds
 
 ## Manual Deployment
 

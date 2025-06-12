@@ -7,8 +7,8 @@ Copy these exact values into your GitHub repository settings.
 ### Variable Name: `VARS`
 ```
 AWS_REGION=us-east-1
-FRONTEND_HOST=dublindash.wilde.house
-BACKEND_HOST=dublindash-api.wilde.house
+FRONTEND_HOST=dublindash.wilde.agency
+BACKEND_HOST=dublindash-api.wilde.agency
 FRONTEND_REPLICAS=1
 BACKEND_REPLICAS=1
 DOCKER_REGISTRY=683145523527.dkr.ecr.us-east-1.amazonaws.com

@@ -10,8 +10,9 @@
 - **Services**: Proper networking for frontend and backend communication
 
 ### ✅ Docker Containers
-- **Frontend**: Multi-stage build with nginx + runtime env.js injection
-- **Backend**: Multi-stage build with production Node.js setup
+- **Frontend**: Simple nginx serving pre-built `dist/` + runtime env.js injection
+- **Backend**: Simple Node.js serving pre-built `dist/` + production dependencies
+- **Build Strategy**: GitHub Actions builds, Docker copies (fast & debuggable)
 - **Environment Method**: `window.env` for production, `import.meta.env` for development
 
 ### ✅ GitHub Actions
@@ -49,8 +50,8 @@ Frontend and backend can scale independently based on load.
 **Single Variable** (`VARS`):
 ```
 AWS_REGION=us-east-1
-FRONTEND_HOST=dublindash.wilde.house
-BACKEND_HOST=dublindash-api.wilde.house
+FRONTEND_HOST=dublindash.wilde.agency
+BACKEND_HOST=dublindash-api.wilde.agency
 FRONTEND_REPLICAS=1
 BACKEND_REPLICAS=1
 DOCKER_REGISTRY=683145523527.dkr.ecr.us-east-1.amazonaws.com

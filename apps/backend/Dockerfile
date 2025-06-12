@@ -1,40 +1,16 @@
-# Build stage
-FROM node:18-alpine AS builder
-WORKDIR /app
-
-# Install pnpm
-RUN npm install -g pnpm@10
-
-# Copy workspace files
-COPY package.json pnpm-workspace.yaml pnpm-lock.yaml ./
-COPY packages/shared/package.json ./packages/shared/
-COPY apps/backend/package.json ./apps/backend/
-
-# Install dependencies
-RUN pnpm install --frozen-lockfile
-
-# Copy source code
-COPY packages/shared ./packages/shared
-COPY apps/backend ./apps/backend
-
-# Build backend
-WORKDIR /app/apps/backend
-RUN pnpm run build
-
-# Production stage
+# Simple Node.js server with pre-built backend
 FROM node:18-alpine
 WORKDIR /app
 
-# Install pnpm for production dependencies
+# Install pnpm for package installation
 RUN npm install -g pnpm@10
 
-# Copy built files and package files
-COPY --from=builder /app/apps/backend/dist ./dist
-COPY --from=builder /app/apps/backend/package.json ./
-COPY --from=builder /app/packages/shared /app/packages/shared
+# Copy built application and package.json
+COPY dist/ ./dist/
+COPY package.json ./
 
-# Install production dependencies only
-RUN pnpm install --prod
+# Install only production dependencies
+RUN pnpm install --prod --frozen-lockfile
 
 # Expose port
 EXPOSE 3010
