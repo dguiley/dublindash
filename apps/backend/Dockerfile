@@ -12,5 +12,5 @@ RUN npm install --production
 # Expose port
 EXPOSE 3010
 
-# Start the server
-CMD ["node", "dist/index.js"]
+# Start the server  
+CMD ["node", "dist/apps/backend/src/index.js"]
