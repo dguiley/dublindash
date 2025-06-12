@@ -1,6 +1,9 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { Player, GameState, LevelData, AvatarData, Vector3 } from '@shared/types'
+import { LevelGenerator } from '@/terrain/LevelGenerator'
+import type { BiomeType } from '@/terrain/config/TerrainTypes'
+import type { Group, Mesh } from 'three'
 
 export const useGameStore = defineStore('game', () => {
   // State - Initialize all refs properly for reactivity
@@ -11,6 +14,11 @@ export const useGameStore = defineStore('game', () => {
   const gameTimer = ref<number>(0)
   const debugMode = ref<boolean>(false)
   const phase = ref<'lobby' | 'loading' | 'racing' | 'finished'>('lobby')
+  
+  // Terrain generation state
+  const terrainMeshes = ref<{ visual: Group; collision: Mesh } | undefined>(undefined)
+  const levelGenerator = ref<LevelGenerator | undefined>(undefined)
+  const isGeneratingTerrain = ref<boolean>(false)
   
   // Getters
   const localPlayer = computed(() => 
@@ -227,6 +235,60 @@ export const useGameStore = defineStore('game', () => {
     
     setLevel(demoLevel)
   }
+
+  // Enhanced terrain generation functions
+  const generateTerrainLevel = async (biome: BiomeType = 'temperate_forest') => {
+    if (isGeneratingTerrain.value) {
+      console.warn('⚠️ Terrain generation already in progress')
+      return
+    }
+
+    try {
+      isGeneratingTerrain.value = true
+      phase.value = 'loading'
+      
+      console.log(`🌍 Generating terrain level: ${biome}`)
+      
+      // Initialize level generator if not exists
+      if (!levelGenerator.value) {
+        levelGenerator.value = new LevelGenerator()
+      }
+
+      // Generate the complete level with terrain
+      const result = await levelGenerator.value.generateLevel({
+        biome,
+        seed: Math.floor(Math.random() * 10000),
+        size: { width: 150, height: 150 },
+        racingFriendly: true
+      })
+
+      // Store terrain meshes
+      terrainMeshes.value = result.terrainMeshes
+
+      // Set the level data
+      setLevel(result.levelData)
+
+      console.log(`✅ Terrain level generated successfully!`)
+      console.log(`📊 Biome: ${result.levelData.biome}`)
+      console.log(`🌲 Features: ${result.levelData.geometry.obstacles.length}`)
+      
+      phase.value = 'lobby'
+
+    } catch (error) {
+      console.error('❌ Failed to generate terrain level:', error)
+      // Fallback to demo level
+      createDemoLevel()
+      phase.value = 'lobby'
+    } finally {
+      isGeneratingTerrain.value = false
+    }
+  }
+
+  const generateRandomLevel = async () => {
+    const biomes: BiomeType[] = ['temperate_forest', 'desert', 'alpine', 'wetlands']
+    const randomBiome = biomes[Math.floor(Math.random() * biomes.length)]
+    return generateTerrainLevel(randomBiome)
+  }
   
   // Easter eggs and debug functions
   const toggleDebugMode = () => {
@@ -272,6 +334,8 @@ export const useGameStore = defineStore('game', () => {
     gameTimer,
     debugMode,
     phase,
+    terrainMeshes,
+    isGeneratingTerrain,
     
     // Getters
     localPlayer,
@@ -289,6 +353,8 @@ export const useGameStore = defineStore('game', () => {
     createLocalPlayer,
     startRace,
     createDemoLevel,
+    generateTerrainLevel,
+    generateRandomLevel,
     toggleDebugMode
   }
 })

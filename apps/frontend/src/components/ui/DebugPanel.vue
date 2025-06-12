@@ -62,6 +62,52 @@
         </div>
       </div>
       
+      <!-- Terrain Controls -->
+      <div class="border-t border-slate-600 pt-2 mt-2">
+        <strong>Terrain Generation:</strong>
+        <div class="grid grid-cols-2 gap-1 mt-1">
+          <button 
+            @click="generateForest"
+            :disabled="gameStore.isGeneratingTerrain"
+            class="px-2 py-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-600 rounded text-xs transition-colors"
+          >
+            🌲 Forest
+          </button>
+          
+          <button 
+            @click="generateDesert"
+            :disabled="gameStore.isGeneratingTerrain"
+            class="px-2 py-1 bg-yellow-600 hover:bg-yellow-700 disabled:bg-gray-600 rounded text-xs transition-colors"
+          >
+            🏜️ Desert
+          </button>
+          
+          <button 
+            @click="generateAlpine"
+            :disabled="gameStore.isGeneratingTerrain"
+            class="px-2 py-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 rounded text-xs transition-colors"
+          >
+            🏔️ Alpine
+          </button>
+          
+          <button 
+            @click="generateWetlands"
+            :disabled="gameStore.isGeneratingTerrain"
+            class="px-2 py-1 bg-teal-600 hover:bg-teal-700 disabled:bg-gray-600 rounded text-xs transition-colors"
+          >
+            🌿 Wetlands
+          </button>
+        </div>
+        
+        <button 
+          @click="generateRandom"
+          :disabled="gameStore.isGeneratingTerrain"
+          class="w-full mt-1 px-2 py-1 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 rounded text-xs transition-colors"
+        >
+          {{ gameStore.isGeneratingTerrain ? '⏳ Generating...' : '🎲 Random Terrain' }}
+        </button>
+      </div>
+      
       <!-- Level Info -->
       <div v-if="gameStore.currentLevel" class="border-t border-slate-600 pt-2 mt-2">
         <strong>Level:</strong>
@@ -130,6 +176,7 @@
 import { useGameStore } from '@/stores/game'
 import { useMultiplayerStore } from '@/stores/multiplayer'
 import type { Vector3 } from '@shared/types'
+import '@/terrain/TerrainDemo' // Load terrain demo for console access
 
 const gameStore = useGameStore()
 const multiplayerStore = useMultiplayerStore()
@@ -140,6 +187,27 @@ const formatTimestamp = (timestamp: number) => {
   if (diff < 60) return `${diff}s`
   if (diff < 3600) return `${Math.floor(diff / 60)}m`
   return `${Math.floor(diff / 3600)}h`
+}
+
+// Terrain generation functions
+const generateForest = () => {
+  gameStore.generateTerrainLevel('temperate_forest')
+}
+
+const generateDesert = () => {
+  gameStore.generateTerrainLevel('desert')
+}
+
+const generateAlpine = () => {
+  gameStore.generateTerrainLevel('alpine')
+}
+
+const generateWetlands = () => {
+  gameStore.generateTerrainLevel('wetlands')
+}
+
+const generateRandom = () => {
+  gameStore.generateRandomLevel()
 }
 
 const formatVector = (v: Vector3) => 

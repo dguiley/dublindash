@@ -5,6 +5,7 @@ import { useGameStore } from '@/stores/game'
 import { useMultiplayerStore } from '@/stores/multiplayer'
 import { useInput } from '@/composables/useInput'
 import LevelRenderer from './LevelRenderer.vue'
+import TerrainLevelRenderer from './TerrainLevelRenderer.vue'
 import PlayerAvatar from './PlayerAvatar.vue'
 import type { Vector3 } from '@shared/types'
 
@@ -203,9 +204,16 @@ onMounted(() => {
         :fov="60"
       />
       
-      <!-- Level Geometry -->
+      <!-- Level Geometry - Use terrain renderer if terrain meshes available -->
+      <TerrainLevelRenderer 
+        v-if="gameStore.currentLevel && gameStore.terrainMeshes"
+        :level="gameStore.currentLevel"
+        :terrain-meshes="gameStore.terrainMeshes"
+      />
+      
+      <!-- Fallback to regular level renderer -->
       <LevelRenderer 
-        v-if="gameStore.currentLevel"
+        v-else-if="gameStore.currentLevel"
         :level="gameStore.currentLevel"
       />
       
