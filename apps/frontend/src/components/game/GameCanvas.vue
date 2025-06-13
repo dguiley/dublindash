@@ -250,10 +250,14 @@ onMounted(() => {
       <div v-if="gameStore.localPlayer">
         Velocity: {{ formatVector(gameStore.localPlayer.velocity) }}
       </div>
+      <div v-if="gameStore.localPlayer && gameStore.localPlayerId && gameStore.physicsBodies.get(gameStore.localPlayerId)">
+        Grounded: {{ gameStore.physicsBodies.get(gameStore.localPlayerId)?.isGrounded ? '✅' : '❌' }}
+      </div>
       <div>Camera: {{ formatVector({ x: cameraPosition[0], y: cameraPosition[1], z: cameraPosition[2] }) }}</div>
       <div>Zoom: {{ cameraZoom.toFixed(1) }}x {{ isMapView ? '(Map View)' : '' }}</div>
       <div>Phase: {{ gameStore.phase }}</div>
       <div>All Players: {{ gameStore.allPlayers.length }}</div>
+      <div v-if="gameStore.terrainMeshes">Terrain: ✅ Loaded</div>
     </div>
   </div>
 </template>

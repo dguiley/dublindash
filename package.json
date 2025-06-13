@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "pnpm --filter dublindash-frontend dev",
-    "dev:backend": "PORT=3010 pnpm --filter dublindash-backend dev", 
+    "dev:backend": "PORT=3010 pnpm --filter dublindash-backend dev",
     "dev:all": "concurrently \"pnpm dev:backend\" \"pnpm dev\"",
     "build": "pnpm --filter dublindash-frontend build",
     "type-check": "pnpm --filter dublindash-frontend type-check",
@@ -19,5 +19,9 @@
   "engines": {
     "node": ">=18",
     "pnpm": ">=8"
+  },
+  "dependencies": {
+    "@enable3d/ammo-physics": "^0.26.1",
+    "@enable3d/three-graphics": "^0.26.1"
   }
 }

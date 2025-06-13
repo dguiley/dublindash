@@ -4,11 +4,13 @@ import { createRouter, createWebHistory } from 'vue-router'
 import App from './App.vue'
 import IndexPage from './pages/index.vue'
 import GamePage from './pages/game.vue'
+import PhysicsTestPage from './pages/physics-test.vue'
 import './style.css'
 
 const routes = [
   { path: '/', component: IndexPage, meta: { title: 'DublinDash - Racing Game' } },
   { path: '/game', component: GamePage, meta: { title: 'DublinDash - Racing' } },
+  { path: '/physics-test', component: PhysicsTestPage, meta: { title: 'Physics Test' } },
 ]
 
 const router = createRouter({

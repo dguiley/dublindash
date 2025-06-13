@@ -3,7 +3,10 @@ import { ref, computed } from 'vue'
 import type { Player, GameState, LevelData, AvatarData, Vector3 } from '@shared/types'
 import { LevelGenerator } from '@/terrain/LevelGenerator'
 import type { BiomeType } from '@/terrain/config/TerrainTypes'
+import * as THREE from 'three'
 import type { Group, Mesh } from 'three'
+import { PhysicsEngine, type PhysicsBody } from '@/physics/PhysicsEngine'
+import { PortalRushPhysics } from '@/physics/PortalRushPhysics'
 
 export const useGameStore = defineStore('game', () => {
   // State - Initialize all refs properly for reactivity
@@ -19,6 +22,11 @@ export const useGameStore = defineStore('game', () => {
   const terrainMeshes = ref<{ visual: Group; collision: Mesh } | undefined>(undefined)
   const levelGenerator = ref<LevelGenerator | undefined>(undefined)
   const isGeneratingTerrain = ref<boolean>(false)
+  
+  // Physics state
+  const physicsEngine = ref<PhysicsEngine>(new PhysicsEngine())
+  const physicsBodies = ref<Map<string, PhysicsBody>>(new Map())
+  const portalRushPhysics = ref<PortalRushPhysics | undefined>(undefined)
   
   // Getters
   const localPlayer = computed(() => 
@@ -56,56 +64,104 @@ export const useGameStore = defineStore('game', () => {
     
     console.log('🎮 Moving player:', direction, 'Racing:', isRacing.value)
     
-    // Apply movement with momentum
-    const acceleration = player.godMode ? 2.0 : 0.5
-    player.velocity.x += direction.x * acceleration
-    player.velocity.z += direction.z * acceleration
-    
-    // Apply speed limits (unless god mode)
-    if (!player.godMode) {
-      const maxSpeed = 10
-      const currentSpeed = Math.sqrt(
-        player.velocity.x ** 2 + player.velocity.z ** 2
-      )
-      
-      if (currentSpeed > maxSpeed) {
-        const factor = maxSpeed / currentSpeed
-        player.velocity.x *= factor
-        player.velocity.z *= factor
+    if (portalRushPhysics.value) {
+      // Use portal rush physics for bouncing movement
+      portalRushPhysics.value.movePlayer(player.id, direction, player.godMode)
+    } else {
+      // Fallback to old physics system
+      const body = physicsBodies.value.get(player.id)
+      if (!body) {
+        console.warn('❌ No physics body found for player!')
+        return
       }
+      
+      // Apply movement through physics engine
+      physicsEngine.value.applyMovement(body, direction, player.godMode)
     }
   }
   
   const updatePhysics = (deltaTime: number) => {
-    // Update all players
-    allPlayers.value.forEach(player => {
-      // Update position
-      player.position.x += player.velocity.x * deltaTime
-      player.position.z += player.velocity.z * deltaTime
+    if (portalRushPhysics.value) {
+      // Use portal rush physics for bouncing gameplay
+      portalRushPhysics.value.update(deltaTime)
       
-      // Apply friction
-      const friction = 0.95
-      player.velocity.x *= friction
-      player.velocity.z *= friction
-      
-      // Keep player above ground
-      player.position.y = Math.max(0, player.position.y)
-      
-      // Update lap progress
-      if (currentLevel.value) {
-        player.lapProgress = calculateLapProgress(player.position)
+      // Sync player positions from physics
+      allPlayers.value.forEach(player => {
+        const position = portalRushPhysics.value?.getPlayerPosition(player.id)
+        const velocity = portalRushPhysics.value?.getPlayerVelocity(player.id)
         
-        // Check for finish
-        if (player.lapProgress >= 1.0 && !player.finished) {
-          player.finished = true
-          player.lapTime = gameTimer.value
+        if (position) {
+          player.position = position
+        }
+        if (velocity) {
+          player.velocity = velocity
+        }
+        
+        // Update lap progress
+        if (currentLevel.value) {
+          player.lapProgress = calculateLapProgress(player.position)
           
-          if (player.id === localPlayerId.value) {
-            console.log(`🏁 Finished in ${gameTimer.value.toFixed(2)}s!`)
+          // Check for finish
+          if (player.lapProgress >= 1.0 && !player.finished) {
+            player.finished = true
+            player.lapTime = gameTimer.value
+            
+            if (player.id === localPlayerId.value) {
+              console.log(`🏁 Finished in ${gameTimer.value.toFixed(2)}s!`)
+            }
           }
         }
-      }
-    })
+      })
+    } else {
+      // Fallback to old physics system
+      allPlayers.value.forEach(player => {
+        const body = physicsBodies.value.get(player.id)
+        if (!body) return
+        
+        // Update physics body
+        physicsEngine.value.updateBody(body, deltaTime, player.godMode)
+        
+        // Sync player position with physics body
+        player.position.x = body.position.x
+        player.position.y = body.position.y
+        player.position.z = body.position.z
+        player.velocity.x = body.velocity.x
+        player.velocity.y = body.velocity.y
+        player.velocity.z = body.velocity.z
+        
+        // Check obstacle collisions
+        if (currentLevel.value) {
+          currentLevel.value.geometry.obstacles.forEach(obstacle => {
+            const collision = physicsEngine.value.checkObstacleCollision(
+              body,
+              obstacle.position,
+              obstacle.scale
+            )
+            
+            if (collision) {
+              physicsEngine.value.resolveObstacleCollision(
+                body,
+                obstacle.position,
+                obstacle.scale
+              )
+            }
+          })
+          
+          // Update lap progress
+          player.lapProgress = calculateLapProgress(player.position)
+          
+          // Check for finish
+          if (player.lapProgress >= 1.0 && !player.finished) {
+            player.finished = true
+            player.lapTime = gameTimer.value
+            
+            if (player.id === localPlayerId.value) {
+              console.log(`🏁 Finished in ${gameTimer.value.toFixed(2)}s!`)
+            }
+          }
+        }
+      })
+    }
     
     // Update timer
     if (isRacing.value) {
@@ -133,10 +189,15 @@ export const useGameStore = defineStore('game', () => {
   
   const addPlayer = (player: Player) => {
     players.value.set(player.id, player)
+    
+    // Create physics body for the player
+    const body = physicsEngine.value.createPhysicsBody(player.position)
+    physicsBodies.value.set(player.id, body)
   }
   
   const removePlayer = (playerId: string) => {
     players.value.delete(playerId)
+    physicsBodies.value.delete(playerId)
   }
   
   const setLevel = (level: LevelData) => {
@@ -264,6 +325,19 @@ export const useGameStore = defineStore('game', () => {
 
       // Store terrain meshes
       terrainMeshes.value = result.terrainMeshes
+      
+      // Update physics engine with collision mesh
+      if (result.terrainMeshes.collision) {
+        physicsEngine.value.setTerrainMesh(result.terrainMeshes.collision)
+        
+        // Also update portal rush physics if initialized
+        if (portalRushPhysics.value) {
+          portalRushPhysics.value.setTerrainMesh(result.terrainMeshes.collision)
+          console.log('🎮 Portal rush physics updated with terrain collision mesh')
+        }
+        
+        console.log('🎮 Physics engine updated with terrain collision mesh')
+      }
 
       // Set the level data
       setLevel(result.levelData)
@@ -310,6 +384,74 @@ export const useGameStore = defineStore('game', () => {
         player.lapTime = undefined
       })
       console.log('🎮 Players reset to new start position')
+    }
+  }
+
+  // Initialize portal rush physics
+  const initializePortalRushPhysics = async (scene: THREE.Scene) => {
+    try {
+      portalRushPhysics.value = new PortalRushPhysics(scene, {
+        gravity: -15,
+        playerConfig: {
+          mass: 1,
+          radius: 0.5,
+          speed: 12,
+          jumpForce: 8,
+          bounciness: 0.6,
+          friction: 0.3
+        },
+        portalForce: 25,
+        obstacleBounciness: 0.8
+      })
+      
+      await portalRushPhysics.value.init()
+      console.log('🎮 Portal Rush Physics initialized with bouncing gameplay')
+      
+      // Setup level if one exists
+      if (currentLevel.value) {
+        portalRushPhysics.value.setupLevel(currentLevel.value)
+      }
+      
+      // Setup terrain if it exists
+      if (terrainMeshes.value?.collision) {
+        portalRushPhysics.value.setTerrainMesh(terrainMeshes.value.collision)
+      }
+      
+    } catch (error) {
+      console.error('❌ Failed to initialize Portal Rush Physics:', error)
+    }
+  }
+
+  // Add player to portal rush physics
+  const addPlayerToPortalRush = (playerId: string, mesh: THREE.Object3D, position: Vector3) => {
+    if (portalRushPhysics.value) {
+      portalRushPhysics.value.addPlayer(playerId, mesh, position)
+      console.log(`🎮 Player ${playerId} added to portal rush physics`)
+    }
+  }
+
+  // Add obstacle to portal rush physics
+  const addObstacleToPortalRush = (mesh: THREE.Object3D, position: Vector3, scale: Vector3) => {
+    if (portalRushPhysics.value) {
+      portalRushPhysics.value.addObstacle(mesh, position, scale)
+      console.log('🗿 Obstacle added to portal rush physics')
+    }
+  }
+
+  // Add portal to portal rush physics
+  const addPortalToPortalRush = (portalId: string, mesh: THREE.Object3D, position: Vector3, type: 'start' | 'end') => {
+    if (portalRushPhysics.value) {
+      portalRushPhysics.value.addPortal(portalId, mesh, position, type)
+      console.log(`🌀 Portal ${portalId} added to portal rush physics`)
+    }
+  }
+
+  // Jump player in portal rush physics
+  const jumpPlayer = () => {
+    const player = localPlayer.value
+    if (player && portalRushPhysics.value) {
+      portalRushPhysics.value.jumpPlayer(player.id)
+      console.log('🦘 Player jumped!')
     }
   }
 
@@ -367,6 +509,9 @@ export const useGameStore = defineStore('game', () => {
     phase,
     terrainMeshes,
     isGeneratingTerrain,
+    physicsEngine,
+    physicsBodies,
+    portalRushPhysics,
     
     // Getters
     localPlayer,
@@ -388,6 +533,13 @@ export const useGameStore = defineStore('game', () => {
     generateRandomLevel,
     generateNewLevel,
     initializeDefaultLevel,
-    toggleDebugMode
+    toggleDebugMode,
+    
+    // Portal Rush Physics
+    initializePortalRushPhysics,
+    addPlayerToPortalRush,
+    addObstacleToPortalRush,
+    addPortalToPortalRush,
+    jumpPlayer
   }
 })
