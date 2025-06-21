@@ -247,6 +247,31 @@ export class LevelGenerator {
   }
 
   /**
+   * Generate terrain meshes from existing level data (for multiplayer sync)
+   */
+  async generateTerrainMeshesFromLevel(level: LevelData): Promise<{ visual: Group; collision: Mesh }> {
+    const terrainConfig: TerrainConfig = {
+      seed: level.metadata.seed || 12345,
+      size: { width: level.geometry.terrain.width, height: level.geometry.terrain.height },
+      biome: (level.biome || 'temperate_forest') as BiomeType,
+      detail: 'medium',
+      racingFriendly: true
+    }
+
+    // Initialize terrain generator
+    this.terrainGenerator = new TerrainGenerator(terrainConfig)
+    
+    // Generate terrain with the provided heightmap (flatten 2D array to 1D)
+    const flatHeightMap = level.geometry.terrain.heightMap.flat()
+    const terrainResult = await this.terrainGenerator.generateFromHeightMap(flatHeightMap)
+    
+    return {
+      visual: terrainResult.visualMesh,
+      collision: terrainResult.collisionMesh
+    }
+  }
+
+  /**
    * Dispose of terrain generator resources
    */
   dispose(): void {

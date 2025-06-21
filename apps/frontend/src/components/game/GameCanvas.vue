@@ -129,6 +129,16 @@ const gameLoop = (): void => {
   if (now - lastInputSent >= 1000 / INPUT_SEND_RATE) {
     if (inputs.value.forward || inputs.value.backward || inputs.value.left || inputs.value.right || inputs.value.jump) {
       multiplayerStore.sendInputs(inputs.value)
+      
+      // Also send actual position/velocity for physics sync
+      const player = gameStore.localPlayer
+      if (player) {
+        multiplayerStore.sendPositionUpdate({
+          position: player.position,
+          velocity: player.velocity
+        })
+      }
+      
       lastInputSent = now
     }
   }

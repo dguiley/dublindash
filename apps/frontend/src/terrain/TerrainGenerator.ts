@@ -150,6 +150,91 @@ export class TerrainGenerator {
   }
 
   /**
+   * Generate terrain from existing heightmap data (for multiplayer sync)
+   */
+  async generateFromHeightMap(heightMapData: number[]): Promise<TerrainResult> {
+    const startTime = performance.now()
+    console.log(`🌍 Generating terrain from heightmap (${this.config.size.width}x${this.config.size.height})...`)
+
+    try {
+      // Calculate terrain bounds
+      const bounds = this.calculateBounds()
+
+      // Determine resolution based on detail level
+      const resolution = this.getResolution()
+
+      // Convert flat array to Float32Array
+      const width = Math.floor(this.config.size.width / resolution) + 1
+      const height = Math.floor(this.config.size.height / resolution) + 1
+      const heightMap = new Float32Array(heightMapData)
+
+      // Generate terrain meshes
+      console.log('🏔️ Creating terrain meshes...')
+      const visualMesh = this.terrainMeshBuilder.createTerrainMesh(
+        heightMap,
+        bounds.minX,
+        bounds.minZ,
+        this.config.size.width,
+        this.config.size.height,
+        resolution
+      )
+
+      const collisionMesh = this.terrainMeshBuilder.createCollisionMesh(
+        heightMap,
+        bounds.minX,
+        bounds.minZ,
+        this.config.size.width,
+        this.config.size.height,
+        resolution,
+        2 // Simplification factor for collision
+      )
+
+      // Place vegetation
+      console.log('🌲 Placing vegetation...')
+      const vegetationData = this.vegetationPlacer.placeVegetation(
+        heightMap,
+        bounds.minX,
+        bounds.minZ,
+        Math.floor(this.config.size.width / resolution) + 1,
+        Math.floor(this.config.size.height / resolution) + 1,
+        resolution
+      )
+
+      // Create vegetation meshes
+      const vegetationMeshes = this.vegetationMeshBuilder.createVegetationMeshes(vegetationData)
+
+      // Combine visual meshes
+      const terrainGroup = new Group()
+      terrainGroup.name = 'terrain-group'
+      terrainGroup.add(visualMesh)
+      terrainGroup.add(vegetationMeshes)
+
+      // Create metadata
+      const generationTime = performance.now() - startTime
+      const metadata: TerrainMetadata = {
+        biome: this.config.biome,
+        features: this.extractFeatures(vegetationData),
+        seed: this.config.seed,
+        chunkCount: 1, // Single chunk for now
+        generationTime
+      }
+
+      console.log(`✅ Terrain generation from heightmap complete in ${generationTime.toFixed(2)}ms`)
+
+      return {
+        visualMesh: terrainGroup,
+        collisionMesh,
+        bounds,
+        metadata
+      }
+
+    } catch (error) {
+      console.error('❌ Terrain generation from heightmap failed:', error)
+      throw new Error(`Terrain generation from heightmap failed: ${error}`)
+    }
+  }
+
+  /**
    * Update terrain configuration and regenerate if needed
    */
   updateConfig(newConfig: Partial<TerrainConfig>): void {

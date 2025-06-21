@@ -456,10 +456,48 @@ export const useGameStore = defineStore('game', () => {
   }
 
   // Initialize with terrain level by default
-  const initializeDefaultLevel = async () => {
+  const initializeDefaultLevel = async (skipIfMultiplayer = false) => {
+    // Don't generate local terrain if we're in multiplayer mode
+    if (skipIfMultiplayer) {
+      console.log('🌍 Skipping local terrain generation - using server terrain')
+      return
+    }
+    
     if (!currentLevel.value) {
       console.log('🌍 No level exists, generating default terrain level...')
       await generateTerrainLevel('temperate_forest')
+    }
+  }
+  
+  // Generate terrain meshes from level data (for multiplayer sync)
+  const generateTerrainMeshesFromLevel = async (level: LevelData) => {
+    // Don't regenerate if we already have terrain for this exact level
+    if (terrainMeshes.value && currentLevel.value?.id === level.id) {
+      console.log('🌍 Terrain meshes already exist for this level, skipping regeneration')
+      return
+    }
+    
+    if (!levelGenerator.value) {
+      levelGenerator.value = new LevelGenerator()
+    }
+    
+    try {
+      console.log('🌍 Generating terrain meshes from level data...', level.id)
+      const meshes = await levelGenerator.value.generateTerrainMeshesFromLevel(level)
+      terrainMeshes.value = meshes
+      
+      // Update physics engine with collision mesh
+      if (meshes.collision) {
+        physicsEngine.value.setTerrainMesh(meshes.collision)
+        
+        if (portalRushPhysics.value) {
+          portalRushPhysics.value.setTerrainMesh(meshes.collision)
+        }
+      }
+      
+      console.log('✅ Terrain meshes generated from level data')
+    } catch (error) {
+      console.error('❌ Failed to generate terrain meshes:', error)
     }
   }
   
@@ -533,6 +571,7 @@ export const useGameStore = defineStore('game', () => {
     generateRandomLevel,
     generateNewLevel,
     initializeDefaultLevel,
+    generateTerrainMeshesFromLevel,
     toggleDebugMode,
     
     // Portal Rush Physics

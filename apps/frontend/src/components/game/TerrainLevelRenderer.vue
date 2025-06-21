@@ -47,6 +47,9 @@ const setupTerrainMeshes = () => {
   
   const group = terrainGroupRef.value
   
+  // First clean up any existing terrain to avoid duplicates
+  cleanupTerrainMeshes()
+  
   // Add the visual terrain mesh to the scene
   if (props.terrainMeshes.visual) {
     group.add(props.terrainMeshes.visual)
@@ -66,24 +69,41 @@ const cleanupTerrainMeshes = () => {
   
   for (let i = 0; i < group.children.length; i++) {
     const child = group.children[i]
-    if (child.name && child.name.includes('terrain')) {
+    if (child.name && (child.name.includes('terrain') || child.name === 'terrain-group')) {
       childrenToRemove.push(child)
     }
   }
   
   childrenToRemove.forEach(child => {
+    // Dispose of geometry and materials to free GPU memory
+    if (child.geometry) {
+      child.geometry.dispose()
+    }
+    if (child.material) {
+      if (Array.isArray(child.material)) {
+        child.material.forEach(mat => mat.dispose())
+      } else {
+        child.material.dispose()
+      }
+    }
     group.remove(child)
   })
+  
+  console.log('🧹 Cleaned up terrain meshes')
 }
 
 // Watch for terrain mesh changes
 watch(() => props.terrainMeshes, (newMeshes, oldMeshes) => {
-  if (oldMeshes) {
-    cleanupTerrainMeshes()
-  }
-  
-  if (newMeshes) {
-    setupTerrainMeshes()
+  // Only update if the actual mesh objects changed, not just the reference
+  if (newMeshes !== oldMeshes) {
+    console.log('🌍 Terrain meshes changed, updating renderer')
+    if (oldMeshes) {
+      cleanupTerrainMeshes()
+    }
+    
+    if (newMeshes) {
+      setupTerrainMeshes()
+    }
   }
 }, { immediate: false })
 

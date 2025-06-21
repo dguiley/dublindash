@@ -34,17 +34,17 @@ export class GameManager {
     
     this.players.set(socketId, player)
     
-    // Create a demo level if none exists
+    // Create a terrain level if none exists
     if (!this.currentLevel) {
-      console.log('🌍 No level exists, creating demo level...')
-      this.createDemoLevel()
-      console.log('🌍 Demo level created, phase is now:', this.gamePhase)
+      console.log('🌍 No level exists, creating terrain level...')
+      this.createDemoLevel('temperate_forest')
+      console.log('🌍 Terrain level created, phase is now:', this.gamePhase)
     } else {
       console.log('🌍 Level exists, adding player to existing level')
       console.log('🌍 Current phase:', this.gamePhase)
       // Reset player to start position of existing level
       const start = this.currentLevel.geometry.portals.start
-      player.position = { ...start, y: 0 }
+      player.position = { ...start, y: start.y }
       player.position.x += (Math.random() - 0.5) * 4 // Spread out players
     }
     
@@ -120,8 +120,15 @@ export class GameManager {
     // Update all players
     this.players.forEach(player => {
       // Update position
+      const oldX = player.position.x
+      const oldZ = player.position.z
       player.position.x += player.velocity.x * deltaTime
       player.position.z += player.velocity.z * deltaTime
+      
+      // Log significant position changes
+      if (Math.abs(player.velocity.x) > 0.1 || Math.abs(player.velocity.z) > 0.1) {
+        console.log(`📍 Player ${player.id} moved from (${oldX.toFixed(1)}, ${oldZ.toFixed(1)}) to (${player.position.x.toFixed(1)}, ${player.position.z.toFixed(1)})`)
+      }
       
       // Apply friction
       const friction = 0.92
@@ -169,56 +176,77 @@ export class GameManager {
     return Math.max(0, Math.min(1, 1 - (currentDistance / totalDistance)))
   }
   
-  createDemoLevel(biome = 'tutorial'): LevelData {
+  createDemoLevel(biome = 'temperate_forest'): LevelData {
+    // Generate the same test terrain as the frontend
+    const size = 150
+    const heightMap: number[][] = []
+    
+    // Generate simple hills for the test terrain
+    for (let z = 0; z < size; z++) {
+      const row: number[] = []
+      for (let x = 0; x < size; x++) {
+        // Create rolling hills using sine waves
+        const nx = x / size - 0.5
+        const nz = z / size - 0.5
+        const height = 
+          Math.sin(nx * Math.PI * 4) * 3 + 
+          Math.sin(nz * Math.PI * 3) * 2 + 
+          Math.sin((nx + nz) * Math.PI * 2) * 1.5
+        row.push(height)
+      }
+      heightMap.push(row)
+    }
+    
     const demoLevel: LevelData = {
-      id: `demo-${Date.now()}`,
+      id: `terrain-${Date.now()}`,
       biome,
       geometry: {
         terrain: {
-          width: 100,
-          height: 100,
-          heightMap: []
+          width: size,
+          height: size,
+          heightMap
         },
         obstacles: [
+          // Place obstacles on the terrain
           {
             id: 'tree1',
             type: 'tree',
-            position: { x: 5, y: 0, z: 5 },
+            position: { x: 20, y: 0, z: 10 },
             rotation: 0,
-            scale: { x: 1, y: 2, z: 1 }
+            scale: { x: 1.5, y: 3, z: 1.5 }
           },
           {
             id: 'rock1',
             type: 'rock',
-            position: { x: -8, y: 0, z: 10 },
+            position: { x: -25, y: 0, z: 15 },
             rotation: 0,
-            scale: { x: 2, y: 1.5, z: 2 }
+            scale: { x: 2.5, y: 2, z: 2.5 }
           },
           {
             id: 'tree2',
             type: 'tree',
-            position: { x: 12, y: 0, z: -3 },
+            position: { x: 30, y: 0, z: -20 },
             rotation: 0,
-            scale: { x: 1.2, y: 2.5, z: 1.2 }
+            scale: { x: 2, y: 4, z: 2 }
           },
           {
             id: 'rock2',
             type: 'rock',
-            position: { x: -5, y: 0, z: 15 },
+            position: { x: -15, y: 0, z: 25 },
             rotation: Math.PI / 4,
-            scale: { x: 1.5, y: 1, z: 1.5 }
+            scale: { x: 3, y: 1.5, z: 3 }
           },
           {
-            id: 'barrier1',
-            type: 'barrier',
-            position: { x: 0, y: 0, z: 8 },
+            id: 'tree3',
+            type: 'tree',
+            position: { x: 0, y: 0, z: 0 },
             rotation: 0,
-            scale: { x: 3, y: 1, z: 0.5 }
+            scale: { x: 1.8, y: 3.5, z: 1.8 }
           }
         ],
         portals: {
-          start: { x: 0, y: 0, z: -15 },
-          end: { x: 0, y: 0, z: 25 }
+          start: { x: 0, y: 2, z: -40 },
+          end: { x: 0, y: 2, z: 40 }
         }
       },
       metadata: {
@@ -238,7 +266,7 @@ export class GameManager {
     // Reset all players
     this.players.forEach(player => {
       const start = demoLevel.geometry.portals.start
-      player.position = { ...start, y: 0 }
+      player.position = { ...start, y: start.y }
       player.position.x += (Math.random() - 0.5) * 4 // Spread out players
       player.velocity = { x: 0, y: 0, z: 0 }
       player.lapProgress = 0

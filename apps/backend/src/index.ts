@@ -155,10 +155,24 @@ io.on('connection', (socket) => {
   })
   
   socket.on('player-input', (inputs: MovementInput) => {
+    console.log(`📥 Received player input from ${socket.id}:`, inputs)
     try {
       gameManager.updatePlayerInputs(socket.id, inputs)
     } catch (error) {
       console.error('Error updating player inputs:', error)
+    }
+  })
+  
+  socket.on('player-position-update', (data: { position: Vector3; velocity: Vector3 }) => {
+    try {
+      const player = gameManager.getPlayer(socket.id)
+      if (player) {
+        // Update server-side player position with client's authoritative position
+        player.position = data.position
+        player.velocity = data.velocity
+      }
+    } catch (error) {
+      console.error('Error updating player position:', error)
     }
   })
   

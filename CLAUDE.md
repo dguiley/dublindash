@@ -177,7 +177,12 @@ npm run type-check
 npm run build
 ```
 
+## Memories
+
+- route elements should always be json format
+
 ---
 
-**For quick development**: Just start coding with TypeScript patterns.
-**For strategic planning**: Specify BMAD persona and use formal templates.
+**For quick development**:  Claude Code is great.
+**For strategic planning**: Choose BMAD methodology.  Pick persona based on task and iterate on plan.
+```

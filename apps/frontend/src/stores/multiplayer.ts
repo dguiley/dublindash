@@ -100,7 +100,7 @@ export const useMultiplayerStore = defineStore('multiplayer', () => {
       serverMessage.value = data.message
     })
 
-    currentSocket.on('game-state', (gameState: GameState) => {
+    currentSocket.on('game-state', async (gameState: GameState) => {
       console.log('🚨 GAME STATE RECEIVED!!! 🚨')
       logEvent('game-state', {
         phase: gameState.phase,
@@ -123,7 +123,17 @@ export const useMultiplayerStore = defineStore('multiplayer', () => {
       // Update local game store
       if (gameState.level) {
         console.log('🌍 Setting level from server:', gameState.level.biome)
+        
+        // Clear any existing terrain meshes before setting new level
+        gameStore.terrainMeshes = undefined
+        
         gameStore.setLevel(gameState.level)
+        
+        // Generate terrain meshes for the level if we have terrain data
+        if (gameState.level.geometry.terrain.heightMap.length > 0) {
+          console.log('🌍 Generating terrain meshes from server level data...')
+          await gameStore.generateTerrainMeshesFromLevel(gameState.level)
+        }
       }
 
       // Add ALL players including ourselves
@@ -176,12 +186,24 @@ export const useMultiplayerStore = defineStore('multiplayer', () => {
       console.log('🎮 Is racing computed after set:', gameStore.isRacing)
     })
 
-    currentSocket.on('game-state-update', (gameState: GameState) => {
+    currentSocket.on('game-state-update', async (gameState: GameState) => {
       logEvent('game-state-update', {
         phase: gameState.phase,
         timer: gameState.timer,
         playersCount: gameState.players.length
       })
+      // Handle level updates (avoid regenerating terrain unnecessarily)
+      if (gameState.level && gameState.level.id !== gameStore.currentLevel?.id) {
+        console.log('🌍 New level detected, updating terrain')
+        gameStore.terrainMeshes = undefined
+        gameStore.setLevel(gameState.level)
+        
+        if (gameState.level.geometry.terrain.heightMap.length > 0) {
+          console.log('🌍 Generating terrain meshes from new level data...')
+          await gameStore.generateTerrainMeshesFromLevel(gameState.level)
+        }
+      }
+      
       // Update all players except local player (we handle that locally)
       gameState.players.forEach(serverPlayer => {
         if (serverPlayer.id === currentSocket.id) {
@@ -194,19 +216,8 @@ export const useMultiplayerStore = defineStore('multiplayer', () => {
             localPlayer.finished = serverPlayer.finished
             localPlayer.lapTime = serverPlayer.lapTime
             
-            // Optional: Server reconciliation with threshold
-            const serverPos = serverPlayer.position
-            const clientPos = localPlayer.position
-            const distance = Math.sqrt(
-              (serverPos.x - clientPos.x) ** 2 + 
-              (serverPos.z - clientPos.z) ** 2
-            )
-            
-            // Only correct position if we're way off (anti-cheat)
-            if (distance > 5) {
-              console.log('🔧 Large position difference detected, correcting:', distance)
-              localPlayer.position = serverPlayer.position
-            }
+            // Don't override position for local player - we're authoritative
+            // Server only provides non-position data like lap progress
           }
         } else {
           // Other players - update their positions
@@ -284,6 +295,12 @@ export const useMultiplayerStore = defineStore('multiplayer', () => {
     
     socket.value.emit('player-input', inputs)
   }
+  
+  const sendPositionUpdate = (data: { position: Vector3; velocity: Vector3 }) => {
+    if (!socket.value?.connected) return
+    
+    socket.value.emit('player-position-update', data)
+  }
 
   const sendChatMessage = (message: string) => {
     if (!socket.value?.connected) return
@@ -314,6 +331,7 @@ export const useMultiplayerStore = defineStore('multiplayer', () => {
     joinGame,
     sendMovement,
     sendInputs,
+    sendPositionUpdate,
     sendChatMessage,
     requestLevel
   }

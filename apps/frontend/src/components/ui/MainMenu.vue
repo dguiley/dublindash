@@ -43,12 +43,9 @@ const startMultiplayer = async (): Promise<void> => {
   if (gameStore.localAvatar) {
     console.log('🎮 Joining game with avatar...')
     
-    // Generate terrain level first if none exists
-    if (!gameStore.currentLevel) {
-      console.log('🌍 No level exists, generating terrain level...')
-      loadingMessage.value = "Generating beautiful terrain..."
-      await gameStore.generateTerrainLevel('temperate_forest')
-    }
+    // Don't generate local terrain when joining multiplayer
+    // The server will provide the terrain
+    console.log('🌍 Joining multiplayer - server will provide terrain')
     
     multiplayerStore.joinGame(gameStore.localAvatar)
     
@@ -90,11 +87,6 @@ const startSingleplayer = async (): Promise<void> => {
     }
   } catch (error) {
     console.error('Failed to start singleplayer:', error)
-    // Fallback to demo level
-    gameStore.createDemoLevel()
-    if (gameStore.localAvatar) {
-      gameStore.createLocalPlayer()
-    }
   } finally {
     loading.value = false
   }
