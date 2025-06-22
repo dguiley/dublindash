@@ -308,10 +308,12 @@ export const useMultiplayerStore = defineStore('multiplayer', () => {
     socket.value.emit('chat-message', message)
   }
 
-  const requestLevel = (biome?: string) => {
+  const requestLevel = (data: { levelId?: string; config?: any } | string) => {
     if (!socket.value?.connected) return
 
-    socket.value.emit('request-level', biome)
+    // Support both new object format and legacy string format
+    const requestData = typeof data === 'string' ? { config: { biome: data } } : data
+    socket.value.emit('request-level', requestData)
   }
 
   return {

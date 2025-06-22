@@ -41,6 +41,7 @@ export class TerrainMeshBuilder {
     geometry.rotateX(-Math.PI / 2)
 
     // Apply height map to vertices
+    console.log(`🏔️ Terrain mesh: ${widthSegments}x${heightSegments} segments, ${widthSegments + 1}x${heightSegments + 1} vertices, heightMap length: ${heightMap.length}`)
     this.applyHeightMap(geometry, heightMap, widthSegments + 1, heightSegments + 1)
 
     // Position the geometry correctly
@@ -125,6 +126,8 @@ export class TerrainMeshBuilder {
     const positionAttribute = geometry.getAttribute('position') as BufferAttribute
     const positions = positionAttribute.array as Float32Array
 
+    console.log(`🏔️ Applying heightmap: ${mapWidth}x${mapHeight} to ${positions.length / 3} vertices`)
+
     // Apply height to each vertex
     for (let i = 0; i < positions.length; i += 3) {
       // Calculate which height map point this vertex corresponds to
@@ -135,7 +138,17 @@ export class TerrainMeshBuilder {
       // Ensure we don't go out of bounds
       if (row < mapHeight && col < mapWidth) {
         const heightIndex = row * mapWidth + col
-        positions[i + 1] = heightMap[heightIndex] // Y coordinate
+        
+        // Validate heightmap index
+        if (heightIndex < heightMap.length) {
+          positions[i + 1] = heightMap[heightIndex] // Y coordinate
+        } else {
+          console.warn(`⚠️ Height index ${heightIndex} out of bounds for heightmap length ${heightMap.length}`)
+          positions[i + 1] = 0 // Default height
+        }
+      } else {
+        console.warn(`⚠️ Vertex ${vertexIndex} (${row}, ${col}) out of bounds for ${mapWidth}x${mapHeight} heightmap`)
+        positions[i + 1] = 0 // Default height
       }
     }
 

@@ -1,10 +1,12 @@
 import type { Player, GameState, LevelData, AvatarData, Vector3, MovementInput } from '@shared/types.js'
+import { LevelManager, type LevelGenerationConfig } from '../level/LevelManager.js'
 
 export class GameManager {
   private players: Map<string, Player> = new Map()
   private currentLevel: LevelData | null = null
   private gameTimer: number = 0
   private gamePhase: 'lobby' | 'loading' | 'racing' | 'finished' = 'lobby'
+  private levelManager: LevelManager = new LevelManager()
   
   addPlayer(socketId: string, avatar: AvatarData, name?: string): Player {
     // Generate a fun random name if none provided
@@ -36,9 +38,9 @@ export class GameManager {
     
     // Create a terrain level if none exists
     if (!this.currentLevel) {
-      console.log('🌍 No level exists, creating terrain level...')
-      this.createDemoLevel('temperate_forest')
-      console.log('🌍 Terrain level created, phase is now:', this.gamePhase)
+      console.log('🌍 No level exists, generating server level...')
+      this.generateServerLevel()
+      console.log('🌍 Server level generated, phase is now:', this.gamePhase)
     } else {
       console.log('🌍 Level exists, adding player to existing level')
       console.log('🌍 Current phase:', this.gamePhase)
@@ -125,10 +127,7 @@ export class GameManager {
       player.position.x += player.velocity.x * deltaTime
       player.position.z += player.velocity.z * deltaTime
       
-      // Log significant position changes
-      if (Math.abs(player.velocity.x) > 0.1 || Math.abs(player.velocity.z) > 0.1) {
-        console.log(`📍 Player ${player.id} moved from (${oldX.toFixed(1)}, ${oldZ.toFixed(1)}) to (${player.position.x.toFixed(1)}, ${player.position.z.toFixed(1)})`)
-      }
+      // Position changes are tracked but not logged for performance
       
       // Apply friction
       const friction = 0.92
@@ -176,96 +175,36 @@ export class GameManager {
     return Math.max(0, Math.min(1, 1 - (currentDistance / totalDistance)))
   }
   
-  createDemoLevel(biome = 'temperate_forest'): LevelData {
-    // Generate the same test terrain as the frontend
-    const size = 150
-    const heightMap: number[][] = []
-    
-    // Generate simple hills for the test terrain
-    for (let z = 0; z < size; z++) {
-      const row: number[] = []
-      for (let x = 0; x < size; x++) {
-        // Create rolling hills using sine waves
-        const nx = x / size - 0.5
-        const nz = z / size - 0.5
-        const height = 
-          Math.sin(nx * Math.PI * 4) * 3 + 
-          Math.sin(nz * Math.PI * 3) * 2 + 
-          Math.sin((nx + nz) * Math.PI * 2) * 1.5
-        row.push(height)
-      }
-      heightMap.push(row)
+  /**
+   * Generate a new server level with configurable parameters
+   */
+  generateServerLevel(config?: Partial<LevelGenerationConfig>): LevelData {
+    const defaultConfig: LevelGenerationConfig = {
+      biome: 'temperate_forest',
+      seed: Math.floor(Math.random() * 10000),
+      size: { width: 150, height: 150 },
+      difficulty: 3,
+      theme: 'multiplayer',
+      mood: 'competitive',
+      racingFriendly: true,
+      terrainRoughness: 1.0,
+      obstacleCount: 8
     }
     
-    const demoLevel: LevelData = {
-      id: `terrain-${Date.now()}`,
-      biome,
-      geometry: {
-        terrain: {
-          width: size,
-          height: size,
-          heightMap
-        },
-        obstacles: [
-          // Place obstacles on the terrain
-          {
-            id: 'tree1',
-            type: 'tree',
-            position: { x: 20, y: 0, z: 10 },
-            rotation: 0,
-            scale: { x: 1.5, y: 3, z: 1.5 }
-          },
-          {
-            id: 'rock1',
-            type: 'rock',
-            position: { x: -25, y: 0, z: 15 },
-            rotation: 0,
-            scale: { x: 2.5, y: 2, z: 2.5 }
-          },
-          {
-            id: 'tree2',
-            type: 'tree',
-            position: { x: 30, y: 0, z: -20 },
-            rotation: 0,
-            scale: { x: 2, y: 4, z: 2 }
-          },
-          {
-            id: 'rock2',
-            type: 'rock',
-            position: { x: -15, y: 0, z: 25 },
-            rotation: Math.PI / 4,
-            scale: { x: 3, y: 1.5, z: 3 }
-          },
-          {
-            id: 'tree3',
-            type: 'tree',
-            position: { x: 0, y: 0, z: 0 },
-            rotation: 0,
-            scale: { x: 1.8, y: 3.5, z: 1.8 }
-          }
-        ],
-        portals: {
-          start: { x: 0, y: 2, z: -40 },
-          end: { x: 0, y: 2, z: 40 }
-        }
-      },
-      metadata: {
-        difficulty: 1,
-        theme: biome,
-        mood: 'friendly',
-        seed: 12345
-      }
-    }
+    const finalConfig = { ...defaultConfig, ...config }
     
-    this.currentLevel = demoLevel
+    console.log('🌍 Generating server level with config:', finalConfig)
+    
+    const level = this.levelManager.generateLevel(finalConfig)
+    this.currentLevel = level
     console.log('🌍 Setting game phase to racing...')
     this.gamePhase = 'racing'
     this.gameTimer = 0
     console.log('🌍 Game phase set to:', this.gamePhase)
     
-    // Reset all players
+    // Reset all players to start position
     this.players.forEach(player => {
-      const start = demoLevel.geometry.portals.start
+      const start = level.geometry.portals.start
       player.position = { ...start, y: start.y }
       player.position.x += (Math.random() - 0.5) * 4 // Spread out players
       player.velocity = { x: 0, y: 0, z: 0 }
@@ -274,8 +213,27 @@ export class GameManager {
       player.lapTime = undefined
     })
     
-    console.log(`🌍 Demo level created: ${biome}`)
-    return demoLevel
+    return level
+  }
+
+  /**
+   * Get the current level (for API endpoints)
+   */
+  getCurrentLevelData(): LevelData | null {
+    return this.levelManager.getCurrentLevel()
+  }
+
+  /**
+   * Generate a level with specific seed for consistent multiplayer
+   */
+  generateLevelWithSeed(seed: number, biome: string = 'temperate_forest'): LevelData {
+    return this.generateServerLevel({
+      seed,
+      biome: biome as any,
+      difficulty: 4,
+      theme: 'multiplayer',
+      racingFriendly: true
+    })
   }
   
   getGameState(): GameState {

@@ -298,7 +298,7 @@ export const useGameStore = defineStore('game', () => {
   }
 
   // Enhanced terrain generation functions
-  const generateTerrainLevel = async (biome: BiomeType = 'temperate_forest') => {
+  const generateTerrainLevel = async (biome: BiomeType = 'temperate_forest', seed?: number) => {
     if (isGeneratingTerrain.value) {
       console.warn('⚠️ Terrain generation already in progress')
       return
@@ -318,7 +318,7 @@ export const useGameStore = defineStore('game', () => {
       // Generate the complete level with terrain
       const result = await levelGenerator.value.generateLevel({
         biome,
-        seed: Math.floor(Math.random() * 10000),
+        seed: seed || Math.floor(Math.random() * 10000),
         size: { width: 150, height: 150 },
         racingFriendly: true
       })

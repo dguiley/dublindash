@@ -84,10 +84,10 @@ export class LevelGenerator {
    * Convert terrain result to LevelData terrain format
    */
   private createTerrainGeometry(terrainResult: any, size: { width: number; height: number }) {
-    // Create a simplified height map for the existing system
-    const resolution = 4 // Sample every 4 units
-    const mapWidth = Math.floor(size.width / resolution)
-    const mapHeight = Math.floor(size.height / resolution)
+    // Create a height map matching TerrainGenerator's medium detail resolution
+    const resolution = 2 // Sample every 2 units to match TerrainGenerator
+    const mapWidth = Math.floor(size.width / resolution) + 1
+    const mapHeight = Math.floor(size.height / resolution) + 1
     const heightMap: number[][] = []
 
     for (let z = 0; z < mapHeight; z++) {

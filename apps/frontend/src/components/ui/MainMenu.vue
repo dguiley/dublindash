@@ -69,16 +69,13 @@ const showAvatarCreator = (): void => {
 }
 
 const startSingleplayer = async (): Promise<void> => {
-  console.log('🎮 Starting singleplayer mode with terrain generation...')
+  console.log('🎮 Starting singleplayer mode...')
   
   loading.value = true
-  loadingMessage.value = "Generating beautiful terrain..."
+  loadingMessage.value = "Preparing race..."
   
   try {
-    // Generate a new terrain level
-    await gameStore.generateTerrainLevel('temperate_forest')
-    
-    // Create local player if we have an avatar
+    // Create local player if we have an avatar  
     if (gameStore.localAvatar) {
       gameStore.createLocalPlayer()
       gameStore.startRace()

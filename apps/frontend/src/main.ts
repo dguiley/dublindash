@@ -10,6 +10,7 @@ import './style.css'
 const routes = [
   { path: '/', component: IndexPage, meta: { title: 'DublinDash - Racing Game' } },
   { path: '/game', component: GamePage, meta: { title: 'DublinDash - Racing' } },
+  { path: '/game/:levelId', component: GamePage, meta: { title: 'DublinDash - Racing' } },
   { path: '/physics-test', component: PhysicsTestPage, meta: { title: 'Physics Test' } },
 ]
 

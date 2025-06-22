@@ -155,7 +155,6 @@ io.on('connection', (socket) => {
   })
   
   socket.on('player-input', (inputs: MovementInput) => {
-    console.log(`📥 Received player input from ${socket.id}:`, inputs)
     try {
       gameManager.updatePlayerInputs(socket.id, inputs)
     } catch (error) {
@@ -217,10 +216,30 @@ io.on('connection', (socket) => {
     }
   })
   
-  socket.on('request-level', (biome?: string) => {
-    // For now, send a demo level
-    const demoLevel = gameManager.createDemoLevel(biome)
-    socket.emit('level-data', demoLevel)
+  socket.on('request-level', (data: { levelId?: string; config?: any }) => {
+    console.log(`🌍 Level requested:`, data)
+    
+    try {
+      let level: any
+      
+      if (data.levelId) {
+        // Request specific level by ID
+        level = gameManager.getCurrentLevelData()
+        if (!level || level.id !== data.levelId) {
+          // Generate level with seed from levelId
+          const seed = data.levelId.split('_')[1] ? parseInt(data.levelId.split('_')[1], 36) : Math.floor(Math.random() * 10000)
+          level = gameManager.generateLevelWithSeed(seed)
+        }
+      } else {
+        // Generate new level with config
+        level = gameManager.generateServerLevel(data.config)
+      }
+      
+      socket.emit('level-data', level)
+    } catch (error) {
+      console.error('Error handling level request:', error)
+      socket.emit('error', { message: 'Failed to generate level' })
+    }
   })
   
   socket.on('disconnect', () => {
@@ -240,6 +259,8 @@ io.on('connection', (socket) => {
 const TICK_RATE = 20 // 20 FPS server tick
 let lastBroadcast = 0
 const BROADCAST_RATE = 1 // 1 FPS for state updates (timer etc)
+let lastStatusLog = 0
+const STATUS_LOG_INTERVAL = 60000 // Log status every minute
 
 setInterval(() => {
   try {
@@ -260,6 +281,13 @@ setInterval(() => {
         io.emit('game-state-update', gameState)
       }
       lastBroadcast = now
+    }
+    
+    // Log status digest every minute
+    if (now - lastStatusLog >= STATUS_LOG_INTERVAL) {
+      const gameState = gameManager.getGameState()
+      console.log(`📊 Server Status: ${gameState.players.length} players, phase: ${gameState.phase}, timer: ${gameState.timer.toFixed(1)}s`)
+      lastStatusLog = now
     }
     
   } catch (error) {

@@ -163,9 +163,15 @@ export class TerrainGenerator {
       // Determine resolution based on detail level
       const resolution = this.getResolution()
 
-      // Convert flat array to Float32Array
+      // Convert flat array to Float32Array with validation
       const width = Math.floor(this.config.size.width / resolution) + 1
       const height = Math.floor(this.config.size.height / resolution) + 1
+      const expectedSize = width * height
+      
+      if (heightMapData.length !== expectedSize) {
+        console.warn(`⚠️ Heightmap size mismatch: expected ${expectedSize} (${width}x${height}), got ${heightMapData.length}`)
+      }
+      
       const heightMap = new Float32Array(heightMapData)
 
       // Generate terrain meshes
